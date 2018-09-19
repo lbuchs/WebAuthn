@@ -4,8 +4,6 @@ namespace WebAuthn\Attestation;
 
 
 /**
- * Description of authenticatorData
- *
  * @author Lukas Buchs
  */
 class AuthenticatorData {
@@ -30,29 +28,29 @@ class AuthenticatorData {
     /**
      * Parsing the authenticatorData binary.
      * @param string $binary
-     * @throws Exception
+     * @throws \WebAuthn\WebAuthnException
      */
     public function __construct($binary) {
-        if (!is_string($binary) || strlen($binary) < 37) {
-            throw new Exception('Invalid authenticatorData input');
+        if (!\is_string($binary) || \strlen($binary) < 37) {
+            throw new \WebAuthn\WebAuthnException('Invalid authenticatorData input');
         }
 
         // Read infos from binary
         // https://www.w3.org/TR/webauthn/#sec-authenticator-data
 
         // RP ID
-        $this->_rpIdHash = substr($binary, 0, 32);
+        $this->_rpIdHash = \substr($binary, 0, 32);
 
         // flags (1 byte)
-        $flags = unpack('Cflags', substr($binary, 32, 1))['flags'];
+        $flags = \unpack('Cflags', \substr($binary, 32, 1))['flags'];
         $this->_flags = $this->_readFlags($flags);
 
         // signature counter: 32-bit unsigned big-endian integer.
-        $this->_signCount = unpack('Nsigncount', substr($binary, 33, 4))['signcount'];
+        $this->_signCount = \unpack('Nsigncount', \substr($binary, 33, 4))['signcount'];
 
         // cannot read attested data and extension data
         if ($this->_flags->attestedDataIncluded && $this->_flags->extensionDataIncluded) {
-            throw new Exception('attest and extension data present. cannot determine length of attest data');
+            throw new \WebAuthn\WebAuthnException('attest and extension data present. cannot determine length of attest data');
 
         // https://www.w3.org/TR/webauthn/#sec-attested-credential-data
         } else if ($this->_flags->attestedDataIncluded) {
@@ -65,11 +63,11 @@ class AuthenticatorData {
      * that identifies the model of the authenticator (not the specific instance
      * of the authenticator)
      * @return string
-     * @throws Exception
+     * @throws \WebAuthn\WebAuthnException
      */
     public function getAAGUID() {
-        if (!($this->_attestedCredentialData instanceof stdClass)) {
-            throw  new Exception('credential data not included in authenticator data');
+        if (!($this->_attestedCredentialData instanceof \stdClass)) {
+            throw  new \WebAuthn\WebAuthnException('credential data not included in authenticator data');
         }
         return $this->_attestedCredentialData->aaguid;
     }
@@ -77,11 +75,11 @@ class AuthenticatorData {
     /**
      * returns the credentialId
      * @return string
-     * @throws Exception
+     * @throws \WebAuthn\WebAuthnException
      */
     public function getCredentialId() {
-        if (!($this->_attestedCredentialData instanceof stdClass)) {
-            throw  new Exception('credential id not included in authenticator data');
+        if (!($this->_attestedCredentialData instanceof \stdClass)) {
+            throw  new \WebAuthn\WebAuthnException('credential id not included in authenticator data');
         }
         return $this->_attestedCredentialData->credentialId;
     }
@@ -89,7 +87,7 @@ class AuthenticatorData {
     /**
      * returns the public key in PEM format
      * @return string
-     * @throws Exception
+     * @throws \WebAuthn\WebAuthnException
      */
     public function getPublicKeyPem() {
         $der =
@@ -102,7 +100,7 @@ class AuthenticatorData {
             );
 
         $pem = '-----BEGIN PUBLIC KEY-----' . "\n";
-        $pem .= chunk_split(base64_encode($der), 64, "\n");
+        $pem .= \chunk_split(\base64_encode($der), 64, "\n");
         $pem .= '-----END PUBLIC KEY-----' . "\n";
         return $pem;
     }
@@ -110,11 +108,11 @@ class AuthenticatorData {
     /**
      * returns the public key in U2F format
      * @return string
-     * @throws Exception
+     * @throws \WebAuthn\WebAuthnException
      */
     public function getPublicKeyU2F() {
-        if (!($this->_attestedCredentialData instanceof stdClass)) {
-            throw  new Exception('credential data not included in authenticator data');
+        if (!($this->_attestedCredentialData instanceof \stdClass)) {
+            throw  new \WebAuthn\WebAuthnException('credential data not included in authenticator data');
         }
         return "\x04" . // ECC uncompressed
                 $this->_attestedCredentialData->credentialPublicKey->x .
@@ -163,7 +161,7 @@ class AuthenticatorData {
      * @return \stdClass
      */
     private function _readFlags($binFlag) {
-        $flags = new stdClass();
+        $flags = new \stdClass();
 
         $flags->bit_0 = !!($binFlag & 1);
         $flags->bit_1 = !!($binFlag & 2);
@@ -186,24 +184,24 @@ class AuthenticatorData {
      * read attested data
      * @param string $binary
      * @return \stdClass
-     * @throws Exception
+     * @throws \WebAuthn\WebAuthnException
      */
     private function _readAttestData($binary) {
-        $attestedCData = new stdClass();
+        $attestedCData = new \stdClass();
         if (strlen($binary) <= 55) {
-            throw new Exception('Attested data should be present but is missing');
+            throw new \WebAuthn\WebAuthnException('Attested data should be present but is missing');
         }
 
         // The AAGUID of the authenticator
-        $attestedCData->aaguid = substr($binary,37, 16);
+        $attestedCData->aaguid = \substr($binary,37, 16);
 
         //Byte length L of Credential ID, 16-bit unsigned big-endian integer.
-        $length = unpack('nlength', substr($binary, 53, 2))['length'];
+        $length = unpack('nlength', \substr($binary, 53, 2))['length'];
 
-        $attestedCData->credentialId = substr($binary, 55, $length);
+        $attestedCData->credentialId = \substr($binary, 55, $length);
 
         // extract public key
-        $attestedCData->credentialPublicKey = $this->_readCredentialPublicKey(substr($binary, 55 + $length));
+        $attestedCData->credentialPublicKey = $this->_readCredentialPublicKey(\substr($binary, 55 + $length));
 
         return $attestedCData;
     }
@@ -212,40 +210,40 @@ class AuthenticatorData {
      * reads COSE key-encoded elliptic curve public key in EC2 format
      * @param string $binary
      * @return \stdClass
-     * @throws Exception
+     * @throws \WebAuthn\WebAuthnException
      */
     private function _readCredentialPublicKey($binary) {
         require_once '../CBOR/CBOREncoder.php';
         $enc = \WebAuthn\CBOR\CBOREncoder::decode($binary);
 
         // COSE key-encoded elliptic curve public key in EC2 format
-        $credPKey = new stdClass();
+        $credPKey = new \stdClass();
         $credPKey->kty = $enc[self::$_COSE_KTY];
         $credPKey->alg = $enc[self::$_COSE_ALG];
         $credPKey->crv = $enc[self::$_COSE_CRV];
-        $credPKey->x = is_object($enc[self::$_COSE_X]) && $enc[self::$_COSE_X] instanceof \WebAuthn\CBOR\Types\CBORByteString ? $enc[self::$_COSE_X]->get_byte_string() : '';
-        $credPKey->y = is_object($enc[self::$_COSE_Y]) && $enc[self::$_COSE_Y] instanceof \WebAuthn\CBOR\Types\CBORByteString ? $enc[self::$_COSE_Y]->get_byte_string() : '';
+        $credPKey->x = \is_object($enc[self::$_COSE_X]) && $enc[self::$_COSE_X] instanceof \WebAuthn\CBOR\Types\CBORByteString ? $enc[self::$_COSE_X]->get_byte_string() : '';
+        $credPKey->y = \is_object($enc[self::$_COSE_Y]) && $enc[self::$_COSE_Y] instanceof \WebAuthn\CBOR\Types\CBORByteString ? $enc[self::$_COSE_Y]->get_byte_string() : '';
         unset ($enc);
 
         // Validation
         if ($credPKey->kty !== self::$_EC2_TYPE) {
-            throw new Exception('public key not in EC2 format');
+            throw new \WebAuthn\WebAuthnException('public key not in EC2 format');
         }
 
         if ($credPKey->alg !== self::$_EC2_ES256) {
-            throw new Exception('signature algorithm not ES256');
+            throw new \WebAuthn\WebAuthnException('signature algorithm not ES256');
         }
 
         if ($credPKey->crv !== self::$_EC2_P256) {
-            throw new Exception('curve not P-256');
+            throw new \WebAuthn\WebAuthnException('curve not P-256');
         }
 
-        if (strlen($credPKey->x) !== 32) {
-            throw new Exception('Invalid X-coordinate');
+        if (\strlen($credPKey->x) !== 32) {
+            throw new \WebAuthn\WebAuthnException('Invalid X-coordinate');
         }
 
-        if (strlen($credPKey->y) !== 32) {
-            throw new Exception('Invalid Y-coordinate');
+        if (\strlen($credPKey->y) !== 32) {
+            throw new \WebAuthn\WebAuthnException('Invalid Y-coordinate');
         }
         
         return $credPKey;
@@ -258,25 +256,25 @@ class AuthenticatorData {
 
     private function _der_length($len) {
         if ($len < 128) {
-            return chr($len);
+            return \chr($len);
         }
         $lenBytes = '';
         while ($len > 0) {
-            $lenBytes = chr($len % 256) . $lenBytes;
-            $len = intdiv($len, 256);
+            $lenBytes = \chr($len % 256) . $lenBytes;
+            $len = \intdiv($len, 256);
         }
-        return chr(0x80 | strlen($lenBytes)) . $lenBytes;
+        return \chr(0x80 | \strlen($lenBytes)) . $lenBytes;
     }
 
     private function _der_sequence($contents) {
-        return "\x30" . $this->_der_length(strlen($contents)) . $contents;
+        return "\x30" . $this->_der_length(\strlen($contents)) . $contents;
     }
 
     private function _der_oid($encoded) {
-        return "\x06" . $this->_der_length(strlen($encoded)) . $encoded;
+        return "\x06" . $this->_der_length(\strlen($encoded)) . $encoded;
     }
 
     private function _der_bitString($bytes) {
-        return "\x03" . $this->_der_length(strlen($bytes) + 1) . "\x00" . $bytes;
+        return "\x03" . $this->_der_length(\strlen($bytes) + 1) . "\x00" . $bytes;
     }
 }

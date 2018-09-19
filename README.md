@@ -1,5 +1,5 @@
 [![Licensed under the MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/lbuchs/WebAuthn/blob/master/LICENSE)
-[![Requires PHP 5.3](https://img.shields.io/badge/PHP-%3E%3D%205.3-green.svg)](https://php.net)
+[![Requires PHP 5.4.8](https://img.shields.io/badge/PHP-%3E%3D%205.4.8-green.svg)](https://php.net)
 [![Last Commit](https://img.shields.io/github/last-commit/lbuchs/WebAuthn.svg)](https://github.com/lbuchs/WebAuthn/commits/master)
 [![Its alpha!](https://img.shields.io/badge/release-alpha-red.svg)](https://github.com/lbuchs/WebAuthn/)
 
