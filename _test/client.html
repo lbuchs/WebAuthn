@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<!--
+Copyright (C) 2018 Kipfer Informatik, Lukas Buchs
+Alle Rechte vorbehalten.
+-->
+<html>
+    <head>
+        <title>lbuchs/WebAutn Test</title>
+        <meta charset="UTF-8">
+        <script>
+
+        function newregistration() {
+            // get default args
+            window.fetch('server.php?fn=getCreateArgs', {method:'GET',cache:'no-cache'}).then(function(response) {
+                return response.json();
+
+                // convert base64 to arraybuffer
+            }).then(function(json) {
+               recursiveBase64StrToArrayBuffer(json);
+               return json;
+
+               // create credentials
+            }).then(function(createCredentialArgs) {
+                console.log(createCredentialArgs);
+                return navigator.credentials.create(createCredentialArgs);
+                
+                // convert to base64
+            }).then(function(cred) {
+                return {
+                    clientDataJSON: cred.response.clientDataJSON  ? arrayBufferToBase64(cred.response.clientDataJSON) : null,
+                    attestationObject: cred.response.attestationObject ? arrayBufferToBase64(cred.response.attestationObject) : null
+                };
+
+                // transfer to server
+            }).then(JSON.stringify).then(function(AuthenticatorAttestationResponse) {
+                return window.fetch('server.php?fn=processCreate', {method:'POST', body: AuthenticatorAttestationResponse, cache:'no-cache'});
+
+                // convert to JSON
+            }).then(function(response) {
+                return response.json();
+
+                // analyze response
+            }).then(function(json) {
+               if (json.success) {
+                   window.alert(json.msg || 'registration success');
+               } else {
+                   throw new Error(json.msg);
+               }
+
+               // catch errors
+            }).catch(function(err) {
+                window.alert(err.message || 'unknown error occured');
+            });
+        }
+
+
+
+        function checkregistration() {
+            // get default args
+            window.fetch('server.php?fn=getGetArgs', {method:'GET',cache:'no-cache'}).then(function(response) {
+                return response.json();
+
+                // convert base64 to arraybuffer
+            }).then(function(json) {
+                recursiveBase64StrToArrayBuffer(json);
+                return json;
+
+               // create credentials
+            }).then(function(getCredentialArgs) {
+                return navigator.credentials.get(getCredentialArgs);
+
+                // convert to base64
+            }).then(function(cred) {
+                return {
+                    id: cred.rawId ? arrayBufferToBase64(cred.rawId) : null,
+                    clientDataJSON: cred.response.clientDataJSON  ? arrayBufferToBase64(cred.response.clientDataJSON) : null,
+                    authenticatorData: cred.response.authenticatorData ? arrayBufferToBase64(cred.response.authenticatorData) : null,
+                    signature : cred.response.signature ? arrayBufferToBase64(cred.response.signature) : null
+                };
+
+                // transfer to server
+            }).then(JSON.stringify).then(function(AuthenticatorAttestationResponse) {
+                return window.fetch('server.php?fn=processGet', {method:'POST', body: AuthenticatorAttestationResponse, cache:'no-cache'});
+
+                // convert to json
+            }).then(function(response) {
+                return response.json();
+
+                // analyze response
+            }).then(function(json) {
+               if (json.success) {
+                   window.alert(json.msg || 'login success');
+               } else {
+                   throw new Error(json.msg);
+               }
+
+               // catch errors
+            }).catch(function(err) {
+                window.alert(err.message || 'unknown error occured');
+            });
+        }
+
+        /**
+         * convert RFC 1342 base64 strings to array buffer
+         * @param {mixed} obj
+         * @returns {undefined}
+         */
+        function recursiveBase64StrToArrayBuffer(obj) {
+            if (typeof obj === 'object') {
+                for (let key in obj) {
+                    if (typeof obj[key] === 'string') {
+                        let str = obj[key];
+                        if (str.substring(0,4) === '??B?' && str.substring(str.length-2) === '?=') {
+                            str = str.substring(4, str.length-2);
+
+                            let binary_string =  window.atob(str);
+                            let len = binary_string.length;
+                            let bytes = new Uint8Array(len);
+                            for (var i = 0; i < len; i++)        {
+                                bytes[i] = binary_string.charCodeAt(i);
+                            }
+                            obj[key] = bytes.buffer;
+                        }
+                    } else {
+                        recursiveBase64StrToArrayBuffer(obj[key]);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Convert a ArrayBuffer to Base64
+         * @param {ArrayBuffer} buffer
+         * @returns {String}
+         */
+        function arrayBufferToBase64(buffer) {
+            var binary = '';
+            var bytes = new Uint8Array(buffer);
+            var len = bytes.byteLength;
+            for (var i = 0; i < len; i++) {
+                binary += String.fromCharCode( bytes[ i ] );
+            }
+            return window.btoa(binary);
+        }
+
+        </script>
+    </head>
+    <body>
+        <div>Test of the <a href="https://github.com/lbuchs/WebAuthn">lbuchs/WebAuthn</a> library.</div>
+        <div>
+            <p>&nbsp;</p>
+            <button type="button" onclick="newregistration()">new registration</button>
+            <p>&nbsp;</p>
+            <button type="button" onclick="checkregistration()">check registration</button>
+        </div>
+    </body>
+</html>

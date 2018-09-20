@@ -29,7 +29,7 @@ class WebAuthn {
             throw new WebAuthnException('OpenSSL-Module not installed');;
         }
 
-        if (\in_array('SHA256', \openssl_get_md_methods())) {
+        if (!\in_array('SHA256', \openssl_get_md_methods())) {
             throw new WebAuthnException('SHA256 not supported by this openssl installation.');
         }
     }
@@ -51,45 +51,48 @@ class WebAuthn {
      */
     public function getCreateArgs($userId, $userName, $userDisplayName) {
         $args = new \stdClass();
+        $args->publicKey = new \stdClass();
 
         // relying party
-        $args->rp = new \stdClass();
-        $args->rp->name = $this->_rpName;
-        $args->rp->id = $this->_rpId;
+        $args->publicKey->rp = new \stdClass();
+        $args->publicKey->rp->name = $this->_rpName;
+        $args->publicKey->rp->id = $this->_rpId;
 
         // user
-        $args->user = new \stdClass();
-        $args->user->id = $this->_binAsBase64Str($userId);
-        $args->user->name = $userName;
-        $args->user->displayName = $userDisplayName;
+        $args->publicKey->user = new \stdClass();
+        $args->publicKey->user->id = $this->_binAsBase64Str($userId);
+        $args->publicKey->user->name = $userName;
+        $args->publicKey->user->displayName = $userDisplayName;
 
-        $args->pubKeyCredParams = new \stdClass();
-        $args->pubKeyCredParams->type = 'public-key';
-        $args->pubKeyCredParams->alg = -7; // SHA256
+        $args->publicKey->pubKeyCredParams = array();
+        $tmp = new \stdClass();
+        $tmp->type = 'public-key';
+        $tmp->alg = -7; // SHA256
+        $args->publicKey->pubKeyCredParams[] = $tmp;
 
-        $args->attestation = 'direct';
-        $args->timeout = 20000; // 20s
-        $args->challenge = $this->_binAsBase64Str($this->_createChallenge());
+        $args->publicKey->attestation = 'direct';
+        $args->publicKey->timeout = 20000; // 20s
+        $args->publicKey->challenge = $this->_binAsBase64Str($this->_createChallenge());
 
         return $args;
     }
 
     /**
      * generates the object for key validation
-     * @param array $ids
+     * @param array $credentialIds binary
      * @param bool $allowUsb
      * @param bool $allowNfc
      * @param bool $allowBle
      * @return \stdClass
      */
-    public function getGetArgs($ids, $allowUsb=true, $allowNfc=true, $allowBle=true) {
+    public function getGetArgs($credentialIds, $allowUsb=true, $allowNfc=true, $allowBle=true) {
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
         $args->publicKey->timeout = 20000; // 20s
         $args->publicKey->challenge = $this->_binAsBase64Str($this->_createChallenge());
         $args->publicKey->allowCredentials = array();
 
-        foreach ($ids as $id) {
+        foreach ($credentialIds as $id) {
             $tmp = new \stdClass();
             $tmp->id = $this->_binAsBase64Str($id);
             $tmp->transports = array();
@@ -171,8 +174,8 @@ class WebAuthn {
      * @throws WebAuthnException
      */
     public function processGet($clientDataJSON, $authenticatorData, $signature, $credentialPublicKey, $challenge) {
-        require_once 'Attestation/AttestationObject.php';
-        $attestationObject = new Attestation\AttestationObject($authenticatorData);
+        require_once 'Attestation/AuthenticatorData.php';
+        $authenticatorObj = new Attestation\AuthenticatorData($authenticatorData);
         $clientDataHash = \hash('sha256', $clientDataJSON, true);
         $clientData = \json_decode($clientDataJSON);
 
@@ -180,7 +183,7 @@ class WebAuthn {
             throw new WebAuthnException('invalid client data');
         }
         
-        if (!$attestationObject->getAuthenticatorData()->getUserPresent()) {
+        if (!$authenticatorObj->getUserPresent()) {
             throw new WebAuthnException('user present flag not set');
         }
 
@@ -192,7 +195,7 @@ class WebAuthn {
             throw new WebAuthnException('invalid type');
         }
 
-        if (!$attestationObject->validateRpIdHash($this->_rpIdHash)) {
+        if ($authenticatorObj->getRpIdHash() !== $this->_rpIdHash) {
             throw new WebAuthnException('invalid rpId hash');
         }
 

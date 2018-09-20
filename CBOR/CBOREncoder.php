@@ -85,9 +85,9 @@ class CBOREncoder
             case "string":
                 return self::encode_string($var);
                 break;
-            case get_class($var) == 'CBOR\Types\CBORByteString':
+            case get_class($var) == '\WebAuthn\CBOR\Types\CBORByteString':
                 /**
-                 * @var \CBOR\Types\CBORByteString $var
+                 * @var \WebAuthn\CBOR\Types\CBORByteString $var
                  */
                 return self::encode_string($var->get_byte_string(), true);
                 break;
@@ -141,7 +141,7 @@ class CBOREncoder
                 $out = substr($var, $byte_data_offset, $string_length);
 
                 if($major_type == self::MAJOR_TYPE_BYTE_STRING) {
-                    $out = new \CBOR\Types\CBORByteString($out);
+                    $out = new \WebAuthn\CBOR\Types\CBORByteString($out);
                 }
 
                 $byte_data_offset += $string_length;

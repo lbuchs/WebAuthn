@@ -16,7 +16,7 @@ class AttestationObject {
     public function __construct($binary) {
         require_once '../CBOR/CBOREncoder.php';
         require_once 'AuthenticatorData.php';
-        
+
         $enc = \WebAuthn\CBOR\CBOREncoder::decode($binary);
 
         // validation
@@ -64,7 +64,7 @@ class AttestationObject {
     public function getCertificatePem() {
         $pem = '-----BEGIN CERTIFICATE-----' . "\n";
         $pem .= \chunk_split(\base64_encode($this->_x5c), 64, "\n");
-        $pem .= '-----BEGIN CERTIFICATE-----' . "\n";
+        $pem .= '-----END CERTIFICATE-----' . "\n";
         return $pem;
     }
 
@@ -77,7 +77,8 @@ class AttestationObject {
     public function validateAttestation($clientDataHash) {
         $pubkeyid = \openssl_pkey_get_public($this->getCertificatePem());
         if ($pubkeyid === false) {
-            throw new \WebAuthn\WebAuthnException('invalid public key');
+
+            throw new \WebAuthn\WebAuthnException('invalid public key: ' . openssl_error_string());
         }
 
         $dataToVerify = "\x00";
