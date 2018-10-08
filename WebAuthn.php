@@ -4,7 +4,8 @@ namespace WebAuthn;
 
 /**
  * WebAuthn
- * @author Lukas Buchs
+ * @author L. Buchs
+ * @license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
  */
 class WebAuthn {
     // relying party

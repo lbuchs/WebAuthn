@@ -4,7 +4,14 @@
 [![Its beta!](https://img.shields.io/badge/release-beta-red.svg)](https://github.com/lbuchs/WebAuthn/)
 
 # WebAuthn
-A simple PHP WebAuthn (FIDO2) library
+A simple PHP WebAuthn (FIDO2) server library
+
+## state
+Working, but further security checks necessary. Do not use in productive systems without accurate testing and security analysis.
+
+## todo's
+* check root certificates
+* security analysis
 
 ## infos about WebAuthn
 * [Wikipedia](https://en.wikipedia.org/wiki/WebAuthn)
@@ -14,4 +21,4 @@ A simple PHP WebAuthn (FIDO2) library
 
 ## dependencies
 * PHP >= 5.4.8 with [OpenSSL](http://de.php.net/manual/en/book.openssl.php)
-* modified copy of CBOR library from [2tvenom/CBOREncode](https://github.com/2tvenom/CBOREncode "2tvenoms CBOREncoder") is included in this project.
+* modified copy of CBOR library from [2tvenom/CBOREncode](https://github.com/2tvenom/CBOREncode "2tvenoms CBOREncoder") is included in this project (subject to change)

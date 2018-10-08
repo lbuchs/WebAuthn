@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
-Copyright (C) 2018 Kipfer Informatik, Lukas Buchs
-Alle Rechte vorbehalten.
+Copyright (C) 2018 L. Buchs
+license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 -->
 <html>
     <head>
@@ -9,6 +9,10 @@ Alle Rechte vorbehalten.
         <meta charset="UTF-8">
         <script>
 
+        /**
+         * creates a new FIDO2 registration
+         * @returns {undefined}
+         */
         function newregistration() {
             // get default args
             window.fetch('server.php?fn=getCreateArgs', {method:'GET',cache:'no-cache'}).then(function(response) {
@@ -54,7 +58,10 @@ Alle Rechte vorbehalten.
         }
 
 
-
+        /**
+         * checks a FIDO2 registration
+         * @returns {undefined}
+         */
         function checkregistration() {
             // get default args
             window.fetch('server.php?fn=getGetArgs', {method:'GET',cache:'no-cache'}).then(function(response) {
@@ -145,13 +152,25 @@ Alle Rechte vorbehalten.
 
         </script>
     </head>
-    <body>
-        <div>Test of the <a href="https://github.com/lbuchs/WebAuthn">lbuchs/WebAuthn</a> library.</div>
+    <body style="font-family: Arial,sans-serif;">
+        <h1 style="margin: 40px 10px 2px 0;">lbuchs/WebAuthn</h1>
+        <div style="font-style: italic;">A simple PHP WebAuthn (FIDO2) server library.</div>
+        <div>&nbsp;</div>
+        <div>&nbsp;</div>
+        <div>Simple test script for the <a href="https://github.com/lbuchs/WebAuthn">lbuchs/WebAuthn</a> library.</div>
         <div>
-            <p>&nbsp;</p>
-            <button type="button" onclick="newregistration()">new registration</button>
-            <p>&nbsp;</p>
-            <button type="button" onclick="checkregistration()">check registration</button>
+            <div>&nbsp;</div>
+            <table>
+                <tbody><tr>
+                        <td>
+                            <button type="button" onclick="newregistration()">&#10133; new registration</button>
+                        </td>
+                        <td>
+                            <button type="button" onclick="checkregistration()">&#10068; check registration</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </body>
 </html>

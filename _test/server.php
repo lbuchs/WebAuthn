@@ -1,8 +1,10 @@
 <?php
 
 /* 
- * Copyright (C) 2018 Lukas Buchs
- * Alle Rechte vorbehalten.
+ * Copyright (C) 2018 L. Buchs
+ * license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
+ *
+ * Server test script for WebAuthn library. Saves new registrations in session.
  */
 
 require_once '../WebAuthn.php';

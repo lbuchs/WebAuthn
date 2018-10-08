@@ -3,7 +3,8 @@
 namespace WebAuthn\Attestation;
 
 /**
- * @author Lukas Buchs
+ * @author L. Buchs
+ * @license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
  */
 class AttestationObject {
     private $_signature;
