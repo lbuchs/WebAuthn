@@ -9,15 +9,15 @@ A simple PHP WebAuthn (FIDO2) server library
 ## state
 Working, but further security checks necessary. Do not use in productive systems without accurate testing and security analysis.
 
-## todo's
+## ToDo
 * check root certificates
-* security analysis
 
 ## infos about WebAuthn
 * [Wikipedia](https://en.wikipedia.org/wiki/WebAuthn)
 * [W3C](https://www.w3.org/TR/webauthn/)
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
 * [dev.yubico](https://developers.yubico.com/FIDO2/)
+* [FIDO Alliance](https://fidoalliance.org)
 
 ## dependencies
 * PHP >= 5.4.8 with [OpenSSL](http://de.php.net/manual/en/book.openssl.php)

@@ -35,6 +35,10 @@ try {
             }
         }
 
+        if (count($ids) === 0) {
+            throw new Exception('no registrations in session.');
+        }
+
         print(json_encode($WebAuthn->getGetArgs($ids)));
         $_SESSION['challenge'] = $WebAuthn->getChallenge();
 

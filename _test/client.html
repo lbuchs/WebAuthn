@@ -20,6 +20,12 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                 // convert base64 to arraybuffer
             }).then(function(json) {
+
+                // error handling
+                if (json.success === false) {
+                    throw new Error(json.msg);
+                }
+
                recursiveBase64StrToArrayBuffer(json);
                return json;
 
@@ -69,6 +75,12 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                 // convert base64 to arraybuffer
             }).then(function(json) {
+
+                // error handling
+                if (json.success === false) {
+                    throw new Error(json.msg);
+                }
+                
                 recursiveBase64StrToArrayBuffer(json);
                 return json;
 
