@@ -4,7 +4,7 @@ namespace WebAuthn;
 
 /**
  * WebAuthn
- * @author L. Buchs
+ * @author Lukas Buchs
  * @license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
  */
 class WebAuthn {
@@ -16,7 +16,7 @@ class WebAuthn {
     private $_signatureCounter;
 
     /**
-     * Initialize a new WebAuthn
+     * Initialize a new WebAuthn server
      * @param string $rpName the relying party name
      * @param string $rpId the relying party ID = the domain name
      * @throws WebAuthnException
@@ -49,9 +49,10 @@ class WebAuthn {
      * @param string $userId
      * @param string $userName
      * @param string $userDisplayName
+     * @param int $timeout timeout in seconds
      * @return \stdClass
      */
-    public function getCreateArgs($userId, $userName, $userDisplayName) {
+    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20) {
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
 
@@ -62,7 +63,7 @@ class WebAuthn {
 
         // user
         $args->publicKey->user = new \stdClass();
-        $args->publicKey->user->id = $this->_binAsBase64Str($userId);
+        $args->publicKey->user->id = $userId; // binary
         $args->publicKey->user->name = $userName;
         $args->publicKey->user->displayName = $userDisplayName;
 
@@ -73,8 +74,8 @@ class WebAuthn {
         $args->publicKey->pubKeyCredParams[] = $tmp;
 
         $args->publicKey->attestation = 'direct';
-        $args->publicKey->timeout = 20000; // 20s
-        $args->publicKey->challenge = $this->_binAsBase64Str($this->_createChallenge());
+        $args->publicKey->timeout = $timeout * 1000; // microseconds
+        $args->publicKey->challenge = $this->_createChallenge(); // binary
 
         return $args;
     }
@@ -82,21 +83,22 @@ class WebAuthn {
     /**
      * generates the object for key validation
      * @param array $credentialIds binary
+     * @param int $timeout timeout in seconds
      * @param bool $allowUsb
      * @param bool $allowNfc
      * @param bool $allowBle
      * @return \stdClass
      */
-    public function getGetArgs($credentialIds, $allowUsb=true, $allowNfc=true, $allowBle=true) {
+    public function getGetArgs($credentialIds, $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true) {
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
-        $args->publicKey->timeout = 20000; // 20s
-        $args->publicKey->challenge = $this->_binAsBase64Str($this->_createChallenge());
+        $args->publicKey->timeout = $timeout * 1000; // microseconds
+        $args->publicKey->challenge = $this->_createChallenge();  // binary
         $args->publicKey->allowCredentials = array();
 
         foreach ($credentialIds as $id) {
             $tmp = new \stdClass();
-            $tmp->id = $this->_binAsBase64Str($id);
+            $tmp->id = $id;  // binary
             $tmp->transports = array();
 
             if ($allowUsb) {
@@ -188,11 +190,17 @@ class WebAuthn {
             throw new WebAuthnException('user not verificated during authentication');
         }
 
+        $signCount = $attestationObject->getAuthenticatorData()->getSignCount();
+        if ($signCount > 0) {
+            $this->_signatureCounter = $signCount;
+        }
+
         // prepare data to store for future logins
         $data = new \stdClass();
         $data->credentialId = $attestationObject->getAuthenticatorData()->getCredentialId();
         $data->credentialPublicKey = $attestationObject->getAuthenticatorData()->getPublicKeyPem();
         $data->certificate = $attestationObject->getCertificatePem();
+        $data->signatureCounter = $this->_signatureCounter;
         $data->AAGUID = $attestationObject->getAuthenticatorData()->getAAGUID();
         return $data;
     }
@@ -302,17 +310,6 @@ class WebAuthn {
     // -----------------------------------------------
     // PRIVATE
     // -----------------------------------------------
-
-    /**
-     * returns a string formated by RFC 1342
-     * @param string $binary
-     * @param string $charset
-     * @return string
-     */
-    private function _binAsBase64Str($binary, $charset='') {
-        // RFC 1342
-        return '?' . $charset . '?B?' . \base64_encode($binary) . '?=';
-    }
 
     /**
      * decode base64 url

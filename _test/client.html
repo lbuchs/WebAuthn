@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-Copyright (C) 2018 L. Buchs
+Copyright (C) 2018 Lukas Buchs
 license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 -->
 <html>
@@ -14,6 +14,12 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
          * @returns {undefined}
          */
         function newregistration() {
+
+            if (!window.fetch || !navigator.credentials || !navigator.credentials.create) {
+                window.alert('Browser not supported.');
+                return;
+            }
+
             // get default args
             window.fetch('server.php?fn=getCreateArgs', {method:'GET',cache:'no-cache'}).then(function(response) {
                 return response.json();
@@ -69,6 +75,12 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
          * @returns {undefined}
          */
         function checkregistration() {
+
+            if (!window.fetch || !navigator.credentials || !navigator.credentials.create) {
+                window.alert('Browser not supported.');
+                return;
+            }
+
             // get default args
             window.fetch('server.php?fn=getGetArgs', {method:'GET',cache:'no-cache'}).then(function(response) {
                 return response.json();

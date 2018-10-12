@@ -3,7 +3,7 @@
 namespace WebAuthn\Attestation;
 
 /**
- * @author L. Buchs
+ * @author Lukas Buchs
  * @license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
  */
 class AttestationObject {
