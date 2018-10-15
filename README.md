@@ -7,7 +7,7 @@
 A simple PHP WebAuthn (FIDO2) server library
 
 ## Manual
-See /_test/server.php for a very simple usage of this library
+See /_test/server.php for a very simple usage of this library. Look at [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
 
 ## Todo
 * check root certificates

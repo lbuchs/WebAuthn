@@ -174,6 +174,16 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             return window.btoa(binary);
         }
 
+        /**
+         * force https on load
+         * @returns {undefined}
+         */
+        window.onload = function() {
+            if (location.protocol !== 'https:') {
+                location.href = location.href.replace('http', 'https');
+            }
+        }
+
         </script>
     </head>
     <body style="font-family: Arial,sans-serif;">
@@ -181,7 +191,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
         <div style="font-style: italic;">A simple PHP WebAuthn (FIDO2) server library.</div>
         <div>&nbsp;</div>
         <div>&nbsp;</div>
-        <div>Simple test script for the <a href="https://github.com/lbuchs/WebAuthn">lbuchs/WebAuthn</a> library.</div>
+        <div>Simple working demo for the <a href="https://github.com/lbuchs/WebAuthn">lbuchs/WebAuthn</a> library.</div>
         <div>
             <div>&nbsp;</div>
             <table>
