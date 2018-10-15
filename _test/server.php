@@ -38,18 +38,19 @@ require_once '../WebAuthn.php';
 try {
     session_start();
 
-
+    // read get argument and post body
     $fn = $_GET['fn'];
     $post = trim(file_get_contents('php://input'));
     if ($post) {
         $post = json_decode($post);
     }
 
-
     // new Instance of the server library.
     // make sure that $rpId is the domain name.
     $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', 'localhost');
 
+    // add root certificates to validate new registrations
+    $WebAuthn->addRootCertificates('rootCertificates');
 
 
     // ------------------------------------

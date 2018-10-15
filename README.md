@@ -7,10 +7,13 @@
 A simple PHP WebAuthn (FIDO2) server library
 
 ## Manual
-See /_test/server.php for a very simple usage of this library. Look at [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
+See /_test for a very simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
+
+Please remind that you'll need a way to transport binary data from PHP to JavaScript.
+This is not part of this library. Look at the /_test scripts for a simple implementation with base64.
 
 ## Todo
-* check root certificates
+* detect length of attestedCredentialData if extension data is present. [problem description](https://groups.google.com/a/fidoalliance.org/forum/#!topic/fido-dev/lZ24VfPcDic)
 
 ## Infos about WebAuthn
 * [Wikipedia](https://en.wikipedia.org/wiki/WebAuthn)

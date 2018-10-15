@@ -14,6 +14,7 @@ class WebAuthn {
     private $_rpIdHash;
     private $_challenge;
     private $_signatureCounter;
+    private $_caFiles;
 
     /**
      * Initialize a new WebAuthn server
@@ -33,6 +34,26 @@ class WebAuthn {
 
         if (!\in_array('SHA256', \openssl_get_md_methods())) {
             throw new WebAuthnException('SHA256 not supported by this openssl installation.');
+        }
+    }
+
+    /**
+     * add a root certificate to verify new registrations
+     * @param string $path file path of / directory with root certificates
+     */
+    public function addRootCertificates($path) {
+        if (!\is_array($this->_caFiles)) {
+            $this->_caFiles = array();
+        }
+        $path = \rtrim(\trim($path), '\\/');
+        if (\is_dir($path)) {
+            foreach (\scandir($path) as $ca) {
+                if (\is_file($path . '/' . $ca)) {
+                    $this->addRootCertificates($path . '/' . $ca);
+                }
+            }
+        } else if (\is_file($path) && !\in_array(\realpath($path), $this->_caFiles)) {
+            $this->_caFiles[] = \realpath($path);
         }
     }
 
@@ -178,7 +199,9 @@ class WebAuthn {
         }
 
         // 15. If validation is successful, obtain a list of acceptable trust anchors
-        // TODO
+        if (is_array($this->_caFiles) && !$attestationObject->validateRootCertificate($this->_caFiles)) {
+            throw new WebAuthnException('invalid root certificate');
+        }
 
         // 10. Verify that the User Present bit of the flags in authData is set.
         if ($requireUserPresent && !$attestationObject->getAuthenticatorData()->getUserPresent()) {

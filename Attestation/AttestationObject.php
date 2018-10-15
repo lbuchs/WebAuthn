@@ -79,7 +79,7 @@ class AttestationObject {
         $pubkeyid = \openssl_pkey_get_public($this->getCertificatePem());
         if ($pubkeyid === false) {
 
-            throw new \WebAuthn\WebAuthnException('invalid public key: ' . openssl_error_string());
+            throw new \WebAuthn\WebAuthnException('invalid public key: ' . \openssl_error_string());
         }
 
         $dataToVerify = "\x00";
@@ -90,6 +90,20 @@ class AttestationObject {
 
         // check certificate
         return \openssl_verify($dataToVerify, $this->_signature, $pubkeyid, OPENSSL_ALGO_SHA256) === 1;
+    }
+
+    /**
+     * validates the certificate against root certificates
+     * @param array $rootCas
+     * @return boolean
+     * @throws \WebAuthn\WebAuthnException
+     */
+    public function validateRootCertificate($rootCas) {
+        $v = \openssl_x509_checkpurpose($this->getCertificatePem(), -1, $rootCas);
+        if ($v === -1) {
+            throw new \WebAuthn\WebAuthnException('error on validating certificate: ' . \openssl_error_string());
+        }
+        return $v;
     }
 
     /**
