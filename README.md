@@ -11,6 +11,10 @@ See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://
 Please remind that you'll need a way to transport binary data from PHP to JavaScript.
 This is not part of this library. Look for the /_test scripts for a simple implementation with base64 and json.
 
+## Requirements
+* PHP >= 5.6 with [OpenSSL](http://de.php.net/manual/en/book.openssl.php)
+* Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Opera 54+, Edge 18+)
+
 ## Infos about WebAuthn
 * [Wikipedia](https://en.wikipedia.org/wiki/WebAuthn)
 * [W3C](https://www.w3.org/TR/webauthn/)
@@ -18,6 +22,8 @@ This is not part of this library. Look for the /_test scripts for a simple imple
 * [dev.yubico](https://developers.yubico.com/FIDO2/)
 * [FIDO Alliance](https://fidoalliance.org)
 
-## Requirements
-* PHP >= 5.6 with [OpenSSL](http://de.php.net/manual/en/book.openssl.php)
-* Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Opera 54+, Edge 18+)
+## Hardware
+* [Yubico](https://www.yubico.com/products/yubikey-hardware/compare-yubikeys/)
+* [Solo](https://solokeys.com/)
+* [eWBM](http://www.e-wbm.com/fido_usb.jsp)
+* [Google Titan](https://cloud.google.com/titan-security-key)
