@@ -95,6 +95,8 @@ class WebAuthn {
         $args->publicKey->pubKeyCredParams[] = $tmp;
 
         $args->publicKey->attestation = 'direct';
+        $args->publicKey->extensions = new \stdClass();
+        $args->publicKey->extensions->exts = true;
         $args->publicKey->timeout = $timeout * 1000; // microseconds
         $args->publicKey->challenge = $this->_createChallenge(); // binary
 

@@ -1,6 +1,7 @@
 <?php
 
 namespace WebAuthn\Attestation;
+use \WebAuthn\WebAuthnException;
 
 /**
  * @author Lukas Buchs
@@ -15,39 +16,39 @@ class AttestationObject {
     private static $_attestation_format = 'fido-u2f';
 
     public function __construct($binary) {
-        require_once '../CBOR/CBOREncoder.php';
+        require_once '../CBOR/CborDecoder.php';
         require_once 'AuthenticatorData.php';
 
-        $enc = \WebAuthn\CBOR\CBOREncoder::decode($binary);
+        $enc = \WebAuthn\CBOR\CborDecoder::decode($binary);
 
         // validation
         if (!\is_array($enc)) {
-            throw new \WebAuthn\WebAuthnException('invalid attestation format');
+            throw new WebAuthnException('invalid attestation format');
         }
 
         if (!\array_key_exists('fmt', $enc) || $enc['fmt'] !== self::$_attestation_format || !\array_key_exists('attStmt', $enc) || !\is_array($enc['attStmt'])) {
-            throw new \WebAuthn\WebAuthnException('invalid attestation format');
+            throw new WebAuthnException('invalid attestation format');
         }
 
-        if (!\array_key_exists('sig', $enc['attStmt']) || !\is_object($enc['attStmt']['sig']) || !($enc['attStmt']['sig'] instanceof \WebAuthn\CBOR\Types\CBORByteString)) {
-            throw new \WebAuthn\WebAuthnException('no signature found');
+        if (!\array_key_exists('sig', $enc['attStmt']) || !\is_object($enc['attStmt']['sig']) || !($enc['attStmt']['sig'] instanceof \WebAuthn\CBOR\ByteBuffer)) {
+            throw new WebAuthnException('no signature found');
         }
 
         if (!\array_key_exists('x5c', $enc['attStmt']) || !\is_array($enc['attStmt']['x5c']) || \count($enc['attStmt']['x5c']) !== 1) {
-            throw new \WebAuthn\WebAuthnException('invalid x5c certificate');
+            throw new WebAuthnException('invalid x5c certificate');
         }
 
-        if (!\is_object($enc['attStmt']['x5c'][0]) || !($enc['attStmt']['x5c'][0] instanceof \WebAuthn\CBOR\Types\CBORByteString)) {
-            throw new \WebAuthn\WebAuthnException('invalid x5c certificate');
+        if (!\is_object($enc['attStmt']['x5c'][0]) || !($enc['attStmt']['x5c'][0] instanceof \WebAuthn\CBOR\ByteBuffer)) {
+            throw new WebAuthnException('invalid x5c certificate');
         }
 
-        if (!\array_key_exists('authData', $enc) || !\is_object($enc['authData']) || !($enc['authData'] instanceof \WebAuthn\CBOR\Types\CBORByteString)) {
-            throw new \WebAuthn\WebAuthnException('no signature found');
+        if (!\array_key_exists('authData', $enc) || !\is_object($enc['authData']) || !($enc['authData'] instanceof \WebAuthn\CBOR\ByteBuffer)) {
+            throw new WebAuthnException('no signature found');
         }
 
-        $this->_signature = $enc['attStmt']['sig']->get_byte_string();
-        $this->_x5c = $enc['attStmt']['x5c'][0]->get_byte_string();
-        $this->_authenticatorData = new AuthenticatorData($enc['authData']->get_byte_string());
+        $this->_signature = $enc['attStmt']['sig']->getBinaryString();
+        $this->_x5c = $enc['attStmt']['x5c'][0]->getBinaryString();
+        $this->_authenticatorData = new AuthenticatorData($enc['authData']->getBinaryString());
     }
 
     /**
@@ -73,13 +74,13 @@ class AttestationObject {
      * checks validity of the signature
      * @param string $clientDataHash
      * @return bool
-     * @throws \WebAuthn\WebAuthnException
+     * @throws WebAuthnException
      */
     public function validateAttestation($clientDataHash) {
         $pubkeyid = \openssl_pkey_get_public($this->getCertificatePem());
         if ($pubkeyid === false) {
 
-            throw new \WebAuthn\WebAuthnException('invalid public key: ' . \openssl_error_string());
+            throw new WebAuthnException('invalid public key: ' . \openssl_error_string());
         }
 
         $dataToVerify = "\x00";
@@ -96,12 +97,12 @@ class AttestationObject {
      * validates the certificate against root certificates
      * @param array $rootCas
      * @return boolean
-     * @throws \WebAuthn\WebAuthnException
+     * @throws WebAuthnException
      */
     public function validateRootCertificate($rootCas) {
         $v = \openssl_x509_checkpurpose($this->getCertificatePem(), -1, $rootCas);
         if ($v === -1) {
-            throw new \WebAuthn\WebAuthnException('error on validating certificate: ' . \openssl_error_string());
+            throw new WebAuthnException('error on validating certificate: ' . \openssl_error_string());
         }
         return $v;
     }
