@@ -33,7 +33,7 @@ class ByteBuffer {
     public static function fromHex($hex) {
         $bin = \hex2bin($hex);
         if ($bin === false) {
-            throw new WebAuthnException('ByteBuffer: Invalid hex string');
+            throw new WebAuthnException('ByteBuffer: Invalid hex string', WebAuthnException::BYTEBUFFER);
         }
         return new ByteBuffer($bin);
     }
@@ -46,7 +46,7 @@ class ByteBuffer {
             return new ByteBuffer(\openssl_random_pseudo_bytes($length));
             
         } else {
-            throw new WebAuthnException('ByteBuffer: cannot generate random bytes');
+            throw new WebAuthnException('ByteBuffer: cannot generate random bytes', WebAuthnException::BYTEBUFFER);
         }
     }
 
@@ -56,14 +56,14 @@ class ByteBuffer {
 
     public function getBytes($offset, $length) {
         if ($offset < 0 || $length < 0 || ($offset + $length > $this->length)) {
-            throw new WebAuthnException('ByteBuffer: Invalid offset or length');
+            throw new WebAuthnException('ByteBuffer: Invalid offset or length', WebAuthnException::BYTEBUFFER);
         }
         return \substr($this->data, $offset, $length);
     }
 
     public function getByteVal($offset) {
         if ($offset < 0 || $offset >= $this->length) {
-            throw new WebAuthnException('ByteBuffer: Invalid offset');
+            throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
         return \ord($this->data[$offset]);
     }
@@ -74,36 +74,36 @@ class ByteBuffer {
 
     public function getUint16Val($offset) {
         if ($offset < 0 || ($offset + 2) > $this->length) {
-            throw new WebAuthnException('ByteBuffer: Invalid offset');
+            throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
         return unpack('n', $this->data, $offset)[1];
     }
 
     public function getUint32Val($offset) {
         if ($offset < 0 || ($offset + 4) > $this->length) {
-            throw new WebAuthnException('ByteBuffer: Invalid offset');
+            throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
         $val = unpack('N', $this->data, $offset)[1];
         
         // Signed integer overflow causes signed negative numbers
         if ($val < 0) {
-            throw new WebAuthnException('ByteBuffer: Value out of integer range.');
+            throw new WebAuthnException('ByteBuffer: Value out of integer range.', WebAuthnException::BYTEBUFFER);
         }
         return $val;
     }
 
     public function getUint64Val($offset) {
         if (PHP_INT_SIZE < 8) {
-            throw new WebAuthnException('ByteBuffer: 64-bit values not supported by this system');
+            throw new WebAuthnException('ByteBuffer: 64-bit values not supported by this system', WebAuthnException::BYTEBUFFER);
         }
         if ($offset < 0 || ($offset + 8) > $this->length) {
-            throw new WebAuthnException('ByteBuffer: Invalid offset');
+            throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
         $val = unpack('J', $this->data, $offset)[1];
 
         // Signed integer overflow causes signed negative numbers
         if ($val < 0) {
-            throw new WebAuthnException('ByteBuffer: Value out of integer range.');
+            throw new WebAuthnException('ByteBuffer: Value out of integer range.', WebAuthnException::BYTEBUFFER);
         }
 
         return $val;
@@ -129,14 +129,14 @@ class ByteBuffer {
 
     public function getFloatVal($offset) {
         if ($offset < 0 || ($offset + 4) > $this->length) {
-            throw new WebAuthnException('ByteBuffer: Invalid offset');
+            throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
         return unpack('G', $this->data, $offset)[1];
     }
 
     public function getDoubleVal($offset) {
         if ($offset < 0 || ($offset + 8) > $this->length) {
-            throw new WebAuthnException('ByteBuffer: Invalid offset');
+            throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
         return unpack('E', $this->data, $offset)[1];
     }

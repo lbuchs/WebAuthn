@@ -34,7 +34,7 @@ class AuthenticatorData {
      */
     public function __construct($binary) {
         if (!\is_string($binary) || \strlen($binary) < 37) {
-            throw new WebAuthnException('Invalid authenticatorData input');
+            throw new WebAuthnException('Invalid authenticatorData input', WebAuthnException::INVALID_DATA);
         }
 
         // Read infos from binary
@@ -70,7 +70,7 @@ class AuthenticatorData {
      */
     public function getAAGUID() {
         if (!($this->_attestedCredentialData instanceof \stdClass)) {
-            throw  new WebAuthnException('credential data not included in authenticator data');
+            throw  new WebAuthnException('credential data not included in authenticator data', WebAuthnException::INVALID_DATA);
         }
         return $this->_attestedCredentialData->aaguid;
     }
@@ -82,7 +82,7 @@ class AuthenticatorData {
      */
     public function getCredentialId() {
         if (!($this->_attestedCredentialData instanceof \stdClass)) {
-            throw  new WebAuthnException('credential id not included in authenticator data');
+            throw  new WebAuthnException('credential id not included in authenticator data', WebAuthnException::INVALID_DATA);
         }
         return $this->_attestedCredentialData->credentialId;
     }
@@ -90,7 +90,6 @@ class AuthenticatorData {
     /**
      * returns the public key in PEM format
      * @return string
-     * @throws WebAuthnException
      */
     public function getPublicKeyPem() {
         $der =
@@ -115,7 +114,7 @@ class AuthenticatorData {
      */
     public function getPublicKeyU2F() {
         if (!($this->_attestedCredentialData instanceof \stdClass)) {
-            throw  new WebAuthnException('credential data not included in authenticator data');
+            throw  new WebAuthnException('credential data not included in authenticator data', WebAuthnException::INVALID_DATA);
         }
         return "\x04" . // ECC uncompressed
                 $this->_attestedCredentialData->credentialPublicKey->x .
@@ -193,7 +192,7 @@ class AuthenticatorData {
     private function _readAttestData($binary, &$endOffset) {
         $attestedCData = new \stdClass();
         if (strlen($binary) <= 55) {
-            throw new WebAuthnException('Attested data should be present but is missing');
+            throw new WebAuthnException('Attested data should be present but is missing', WebAuthnException::INVALID_DATA);
         }
 
         // The AAGUID of the authenticator
@@ -234,23 +233,23 @@ class AuthenticatorData {
 
         // Validation
         if ($credPKey->kty !== self::$_EC2_TYPE) {
-            throw new WebAuthnException('public key not in EC2 format');
+            throw new WebAuthnException('public key not in EC2 format', WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
         if ($credPKey->alg !== self::$_EC2_ES256) {
-            throw new WebAuthnException('signature algorithm not ES256');
+            throw new WebAuthnException('signature algorithm not ES256', WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
         if ($credPKey->crv !== self::$_EC2_P256) {
-            throw new WebAuthnException('curve not P-256');
+            throw new WebAuthnException('curve not P-256', WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
         if (\strlen($credPKey->x) !== 32) {
-            throw new WebAuthnException('Invalid X-coordinate');
+            throw new WebAuthnException('Invalid X-coordinate', WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
         if (\strlen($credPKey->y) !== 32) {
-            throw new WebAuthnException('Invalid Y-coordinate');
+            throw new WebAuthnException('Invalid Y-coordinate', WebAuthnException::INVALID_PUBLIC_KEY);
         }
         
         return $credPKey;
@@ -266,7 +265,7 @@ class AuthenticatorData {
         require_once '../CBOR/CborDecoder.php';
         $ext = \WebAuthn\CBOR\CborDecoder::decode($binary);
         if (!is_array($ext)) {
-            throw new WebAuthnException('invalid extension data');
+            throw new WebAuthnException('invalid extension data', WebAuthnException::INVALID_DATA);
         }
 
         return $ext;

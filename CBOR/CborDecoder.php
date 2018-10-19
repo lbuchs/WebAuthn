@@ -33,7 +33,7 @@ class CborDecoder {
         $offset = 0;
         $result = self::_parseItem($buf, $offset);
         if ($offset !== $buf->getLength()) {
-            throw new WebAuthnException('Unused bytes after data item.');
+            throw new WebAuthnException('Unused bytes after data item.', WebAuthnException::CBOR);
         }
         return $result;
     }
@@ -43,7 +43,6 @@ class CborDecoder {
      * @param int $startOffset
      * @param int|null $endOffset
      * @return mixed
-     * @throws WebAuthnException
      */
     public static function decodeInPlace($bufOrBin, $startOffset, &$endOffset = null) {
         $buf = $bufOrBin instanceof ByteBuffer ? $bufOrBin : new ByteBuffer($bufOrBin);
@@ -102,10 +101,10 @@ class CborDecoder {
             case 28:
             case 29:
             case 30:
-                throw new WebAuthnException('Reserved value used.');
+                throw new WebAuthnException('Reserved value used.', WebAuthnException::CBOR);
 
             case 31:
-                throw new WebAuthnException('Indefinite length is not supported.');
+                throw new WebAuthnException('Indefinite length is not supported.', WebAuthnException::CBOR);
         }
 
         return self::_parseSimple($val);
@@ -126,7 +125,7 @@ class CborDecoder {
         if ($val === 22) {
             return null;
         }
-        throw new WebAuthnException(sprintf('Unsupported simple value %d.', $val));
+        throw new WebAuthnException(sprintf('Unsupported simple value %d.', $val), WebAuthnException::CBOR);
     }
 
     protected static function _parseExtraLength($val, ByteBuffer $buf, &$offset) {
@@ -154,10 +153,10 @@ class CborDecoder {
             case 28:
             case 29:
             case 30:
-                throw new WebAuthnException('Reserved value used.');
+                throw new WebAuthnException('Reserved value used.', WebAuthnException::CBOR);
 
             case 31:
-                throw new WebAuthnException('Indefinite length is not supported.');
+                throw new WebAuthnException('Indefinite length is not supported.', WebAuthnException::CBOR);
         }
 
         return $val;
@@ -192,7 +191,7 @@ class CborDecoder {
         }
 
         // This should never be reached
-        throw new WebAuthnException(sprintf('Unknown major type %d.', $type));
+        throw new WebAuthnException(sprintf('Unknown major type %d.', $type), WebAuthnException::CBOR);
     }
 
     protected static function _parseMap(ByteBuffer $buf, &$offset, $count) {
@@ -203,7 +202,7 @@ class CborDecoder {
             $mapVal = self::_parseItem($buf, $offset);
 
             if (!\is_int($mapKey) && !\is_string($mapKey)) {
-                throw new WebAuthnException('Can only use strings or integers as map keys');
+                throw new WebAuthnException('Can only use strings or integers as map keys', WebAuthnException::CBOR);
             }
             
             $map[$mapKey] = $mapVal; // todo dup

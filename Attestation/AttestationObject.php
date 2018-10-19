@@ -23,27 +23,27 @@ class AttestationObject {
 
         // validation
         if (!\is_array($enc)) {
-            throw new WebAuthnException('invalid attestation format');
+            throw new WebAuthnException('invalid attestation format', WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('fmt', $enc) || $enc['fmt'] !== self::$_attestation_format || !\array_key_exists('attStmt', $enc) || !\is_array($enc['attStmt'])) {
-            throw new WebAuthnException('invalid attestation format');
+            throw new WebAuthnException('invalid attestation format', WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('sig', $enc['attStmt']) || !\is_object($enc['attStmt']['sig']) || !($enc['attStmt']['sig'] instanceof \WebAuthn\CBOR\ByteBuffer)) {
-            throw new WebAuthnException('no signature found');
+            throw new WebAuthnException('no signature found', WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('x5c', $enc['attStmt']) || !\is_array($enc['attStmt']['x5c']) || \count($enc['attStmt']['x5c']) !== 1) {
-            throw new WebAuthnException('invalid x5c certificate');
+            throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
         }
 
         if (!\is_object($enc['attStmt']['x5c'][0]) || !($enc['attStmt']['x5c'][0] instanceof \WebAuthn\CBOR\ByteBuffer)) {
-            throw new WebAuthnException('invalid x5c certificate');
+            throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('authData', $enc) || !\is_object($enc['authData']) || !($enc['authData'] instanceof \WebAuthn\CBOR\ByteBuffer)) {
-            throw new WebAuthnException('no signature found');
+            throw new WebAuthnException('no signature found', WebAuthnException::INVALID_DATA);
         }
 
         $this->_signature = $enc['attStmt']['sig']->getBinaryString();
@@ -78,9 +78,9 @@ class AttestationObject {
      */
     public function validateAttestation($clientDataHash) {
         $pubkeyid = \openssl_pkey_get_public($this->getCertificatePem());
-        if ($pubkeyid === false) {
 
-            throw new WebAuthnException('invalid public key: ' . \openssl_error_string());
+        if ($pubkeyid === false) {
+            throw new WebAuthnException('invalid public key: ' . \openssl_error_string(), WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
         $dataToVerify = "\x00";
@@ -102,7 +102,7 @@ class AttestationObject {
     public function validateRootCertificate($rootCas) {
         $v = \openssl_x509_checkpurpose($this->getCertificatePem(), -1, $rootCas);
         if ($v === -1) {
-            throw new WebAuthnException('error on validating certificate: ' . \openssl_error_string());
+            throw new WebAuthnException('error on validating certificate: ' . \openssl_error_string(), WebAuthnException::CERTIFICATE_NOT_TRUSTED);
         }
         return $v;
     }
