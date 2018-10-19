@@ -22,8 +22,11 @@ This is not part of this library. Look for the /_test scripts for a simple imple
 * [dev.yubico](https://developers.yubico.com/FIDO2/)
 * [FIDO Alliance](https://fidoalliance.org)
 
-## Hardware
+## FIDO2 Hardware
+* [Solo](https://solokeys.com) Open Source! 😍
 * [Yubico](https://www.yubico.com/products/yubikey-hardware/compare-yubikeys/)
-* [Solo](https://solokeys.com/)
 * [eWBM](http://www.e-wbm.com/fido_usb.jsp)
 * [Google Titan](https://cloud.google.com/titan-security-key)
+* [Egis](https://www.egistec.com/u2f-solution/)
+* [Feitan](https://www.ftsafe.com/Products/FIDO2)
+* [OneSpan](https://www.vasco.com/products/two-factor-authenticators/hardware/one-button/digipass-secureclick.html)
