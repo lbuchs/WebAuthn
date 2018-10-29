@@ -17,7 +17,6 @@ class WebAuthnException extends \Exception {
     const USER_PRESENT = 9;
     const USER_VERIFICATED = 10;
     const SIGNATURE_COUNTER = 11;
-    const HTTPS = 12;
     const CRYPTO_STRONG = 13;
     const BYTEBUFFER = 14;
     const CBOR = 15;

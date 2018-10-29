@@ -144,8 +144,8 @@ class WebAuthn {
 
     /**
      * returns the new signature counter value.
-     * returns false if there is no counter
-     * @return int|bool
+     * returns null if there is no counter
+     * @return ?int
      */
     public function getSignatureCounter() {
         return is_int($this->_signatureCounter) ? $this->_signatureCounter : null;
@@ -157,7 +157,7 @@ class WebAuthn {
      * @param string $attestationObject binary from browser
      * @param string $challenge binary used challange
      * @param bool $requireUserVerification true, if the device must verify user (e.g. by biometric data or pin)
-     * @param bool $requireUserPresent true, if the device must check user presence (e.g. by pressing a button)
+     * @param bool $requireUserPresent false, if the device must NOT check user presence (e.g. by pressing a button)
      * @return \stdClass
      * @throws WebAuthnException
      */
@@ -356,14 +356,15 @@ class WebAuthn {
         
         // The origin's scheme must be https
         if ($this->_rpId !== 'localhost' && \parse_url($origin, PHP_URL_SCHEME) !== 'https') {
-            throw new WebAuthnException('origin not valid: scheme must be https.', WebAuthnException::HTTPS);
+            return false;
         }
 
         // extract host from origin
         $host = \parse_url($origin, PHP_URL_HOST);
         $host = \trim($host, '.');
 
-        // The RP ID must be equal to the origin's effective domain, or a registrable domain suffix of the origin's effective domain.
+        // The RP ID must be equal to the origin's effective domain, or a registrable
+        // domain suffix of the origin's effective domain.
         return \preg_match('/' . \preg_quote($this->_rpId) . '$/i', $host) === 1;
     }
 
@@ -375,10 +376,16 @@ class WebAuthn {
      */
     private function _createChallenge($length = 32) {
         if (!$this->_challenge) {
-            $crypto_strong = false;
-            $this->_challenge = \openssl_random_pseudo_bytes($length, $crypto_strong);
-            if (!$crypto_strong) {
-                throw new WebAuthnException('cannot create crypto-strong random bytes.', WebAuthnException::CRYPTO_STRONG);
+            if (\function_exists('\random_bytes')) {
+                $this->_challenge = \random_bytes($length);
+
+                // fallback <php7
+            } else {
+                $crypto_strong = false;
+                $this->_challenge = \openssl_random_pseudo_bytes($length, $crypto_strong);
+                if (!$crypto_strong) {
+                    throw new WebAuthnException('cannot create crypto-strong random bytes.', WebAuthnException::CRYPTO_STRONG);
+                }
             }
         }
         return $this->_challenge;
