@@ -2,6 +2,8 @@
 
 namespace WebAuthn\Attestation;
 use \WebAuthn\WebAuthnException;
+use \WebAuthn\CBOR\CborDecoder;
+use WebAuthn\Binary\ByteBuffer;
 
 /**
  * @author Lukas Buchs
@@ -16,10 +18,7 @@ class AttestationObject {
     private static $_attestation_format = 'fido-u2f';
 
     public function __construct($binary) {
-        require_once '../CBOR/CborDecoder.php';
-        require_once 'AuthenticatorData.php';
-
-        $enc = \WebAuthn\CBOR\CborDecoder::decode($binary);
+        $enc = CborDecoder::decode($binary);
 
         // validation
         if (!\is_array($enc)) {
@@ -30,7 +29,7 @@ class AttestationObject {
             throw new WebAuthnException('invalid attestation format', WebAuthnException::INVALID_DATA);
         }
 
-        if (!\array_key_exists('sig', $enc['attStmt']) || !\is_object($enc['attStmt']['sig']) || !($enc['attStmt']['sig'] instanceof \WebAuthn\CBOR\ByteBuffer)) {
+        if (!\array_key_exists('sig', $enc['attStmt']) || !\is_object($enc['attStmt']['sig']) || !($enc['attStmt']['sig'] instanceof ByteBuffer)) {
             throw new WebAuthnException('no signature found', WebAuthnException::INVALID_DATA);
         }
 
@@ -38,11 +37,11 @@ class AttestationObject {
             throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
         }
 
-        if (!\is_object($enc['attStmt']['x5c'][0]) || !($enc['attStmt']['x5c'][0] instanceof \WebAuthn\CBOR\ByteBuffer)) {
+        if (!\is_object($enc['attStmt']['x5c'][0]) || !($enc['attStmt']['x5c'][0] instanceof ByteBuffer)) {
             throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
         }
 
-        if (!\array_key_exists('authData', $enc) || !\is_object($enc['authData']) || !($enc['authData'] instanceof \WebAuthn\CBOR\ByteBuffer)) {
+        if (!\array_key_exists('authData', $enc) || !\is_object($enc['authData']) || !($enc['authData'] instanceof ByteBuffer)) {
             throw new WebAuthnException('no signature found', WebAuthnException::INVALID_DATA);
         }
 

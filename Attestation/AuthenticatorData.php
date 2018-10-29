@@ -2,6 +2,8 @@
 
 namespace WebAuthn\Attestation;
 use \WebAuthn\WebAuthnException;
+use \WebAuthn\CBOR\CborDecoder;
+use WebAuthn\Binary\ByteBuffer;
 
 /**
  * @author Lukas Buchs
@@ -219,16 +221,15 @@ class AuthenticatorData {
      * @throws WebAuthnException
      */
     private function _readCredentialPublicKey($binary, $offset, &$endOffset) {
-        require_once '../CBOR/CborDecoder.php';
-        $enc = \WebAuthn\CBOR\CborDecoder::decodeInPlace($binary, $offset, $endOffset);
+        $enc = CborDecoder::decodeInPlace($binary, $offset, $endOffset);
 
         // COSE key-encoded elliptic curve public key in EC2 format
         $credPKey = new \stdClass();
         $credPKey->kty = $enc[self::$_COSE_KTY];
         $credPKey->alg = $enc[self::$_COSE_ALG];
         $credPKey->crv = $enc[self::$_COSE_CRV];
-        $credPKey->x   = $enc[self::$_COSE_X] instanceof \WebAuthn\CBOR\ByteBuffer ? $enc[self::$_COSE_X]->getBinaryString() : null;
-        $credPKey->y   = $enc[self::$_COSE_Y] instanceof \WebAuthn\CBOR\ByteBuffer ? $enc[self::$_COSE_Y]->getBinaryString() : null;
+        $credPKey->x   = $enc[self::$_COSE_X] instanceof ByteBuffer ? $enc[self::$_COSE_X]->getBinaryString() : null;
+        $credPKey->y   = $enc[self::$_COSE_Y] instanceof ByteBuffer ? $enc[self::$_COSE_Y]->getBinaryString() : null;
         unset ($enc);
 
         // Validation
@@ -262,8 +263,7 @@ class AuthenticatorData {
      * @throws WebAuthnException
      */
     private function _readExtensionData($binary) {
-        require_once '../CBOR/CborDecoder.php';
-        $ext = \WebAuthn\CBOR\CborDecoder::decode($binary);
+        $ext = CborDecoder::decode($binary);
         if (!is_array($ext)) {
             throw new WebAuthnException('invalid extension data', WebAuthnException::INVALID_DATA);
         }

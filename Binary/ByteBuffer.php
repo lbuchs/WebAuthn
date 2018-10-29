@@ -1,7 +1,7 @@
 <?php
 
 
-namespace WebAuthn\CBOR;
+namespace WebAuthn\Binary;
 use \WebAuthn\WebAuthnException;
 
 /**
@@ -10,7 +10,7 @@ use \WebAuthn\WebAuthnException;
  * Modified by Lukas Buchs
  * Thanks Thomas for your work!
  */
-class ByteBuffer {
+class ByteBuffer implements \JsonSerializable, \Serializable {
     /**
      * @var string
      */
@@ -25,6 +25,7 @@ class ByteBuffer {
         $this->data = $binaryData;
         $this->length = \strlen($binaryData);
     }
+
 
     // -----------------------
     // PUBLIC STATIC
@@ -65,7 +66,7 @@ class ByteBuffer {
         if ($offset < 0 || $offset >= $this->length) {
             throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
-        return \ord($this->data[$offset]);
+        return \ord(\substr($this->data, $offset, 1));
     }
 
     public function getLength() {
@@ -168,5 +169,31 @@ class ByteBuffer {
      */
     public function isEmpty() {
         return $this->length === 0;
+    }
+
+
+    /**
+     * jsonSerialize interface
+     * @return \stdClass
+     */
+    public function jsonSerialize() {
+        return '?BINARY?B?' . \base64_encode($this->data) . '?=';
+    }
+
+    /**
+     * Das Serializable-Interface
+     * @return string
+     */
+    public function serialize() {
+        return \serialize($this->data);
+    }
+
+    /**
+     * Das Serializable-Interface
+     * @param string $serialized
+     */
+    public function unserialize($serialized) {
+        $this->data = \unserialize($serialized);
+        $this->length = \strlen($this->data);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 namespace WebAuthn;
+use WebAuthn\Binary\ByteBuffer;
 
 /**
  * WebAuthn
@@ -24,6 +25,11 @@ class WebAuthn {
      */
     public function __construct($rpName, $rpId) {
         require_once 'WebAuthnException.php';
+        require_once 'Binary/ByteBuffer.php';
+        require_once 'Attestation/AttestationObject.php';
+        require_once 'Attestation/AuthenticatorData.php';
+        require_once 'CBOR/CborDecoder.php';
+
         $this->_rpName = $rpName;
         $this->_rpId = $rpId;
         $this->_rpIdHash = \hash('sha256', $rpId, true);
@@ -59,7 +65,7 @@ class WebAuthn {
 
     /**
      * Returns the generated challenge to save for later validation
-     * @return string
+     * @return ByteBuffer
      */
     public function getChallenge() {
         return $this->_challenge;
@@ -84,7 +90,7 @@ class WebAuthn {
 
         // user
         $args->publicKey->user = new \stdClass();
-        $args->publicKey->user->id = $userId; // binary
+        $args->publicKey->user->id = new ByteBuffer($userId); // binary
         $args->publicKey->user->name = $userName;
         $args->publicKey->user->displayName = $userDisplayName;
 
@@ -121,7 +127,7 @@ class WebAuthn {
 
         foreach ($credentialIds as $id) {
             $tmp = new \stdClass();
-            $tmp->id = $id;  // binary
+            $tmp->id = $id instanceof ByteBuffer ? $id : new ByteBuffer($id);  // binary
             $tmp->transports = array();
 
             if ($allowUsb) {
@@ -155,17 +161,16 @@ class WebAuthn {
      * process a create request and returns data to save for future logins
      * @param string $clientDataJSON binary from browser
      * @param string $attestationObject binary from browser
-     * @param string $challenge binary used challange
+     * @param string|ByteBuffer $challenge binary used challange
      * @param bool $requireUserVerification true, if the device must verify user (e.g. by biometric data or pin)
      * @param bool $requireUserPresent false, if the device must NOT check user presence (e.g. by pressing a button)
      * @return \stdClass
      * @throws WebAuthnException
      */
     public function processCreate($clientDataJSON, $attestationObject, $challenge, $requireUserVerification=false, $requireUserPresent=true) {
-        require_once 'Attestation/AttestationObject.php';
-        $attestationObject = new Attestation\AttestationObject($attestationObject);
         $clientDataHash = \hash('sha256', $clientDataJSON, true);
         $clientData = \json_decode($clientDataJSON);
+        $challenge = $challenge instanceof ByteBuffer ? $challenge : new ByteBuffer($challenge);
 
         // security: https://www.w3.org/TR/webauthn/#registering-a-new-credential
 
@@ -181,7 +186,7 @@ class WebAuthn {
         }
 
         // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
-        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge) {
+        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
             throw new WebAuthnException('invalid challenge', WebAuthnException::INVALID_CHALLENGE);
         }
 
@@ -189,6 +194,9 @@ class WebAuthn {
         if (!\property_exists($clientData, 'origin') || !$this->_checkOrigin($clientData->origin)) {
             throw new WebAuthnException('invalid origin', WebAuthnException::INVALID_ORIGIN);
         }
+
+        // Attestation
+        $attestationObject = new Attestation\AttestationObject($attestationObject);
 
         // 9. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.
         if (!$attestationObject->validateRpIdHash($this->_rpIdHash)) {
@@ -237,7 +245,7 @@ class WebAuthn {
      * @param string $authenticatorData binary from browser
      * @param string $signature binary from browser
      * @param string $credentialPublicKey string PEM-formated public key from used credentialId
-     * @param string $challenge  binary from used challange
+     * @param string|ByteBuffer $challenge  binary from used challange
      * @param int $prevSignatureCnt signature count value of the last login
      * @param bool $requireUserVerification true, if the device must verify user (e.g. by biometric data or pin)
      * @param bool $requireUserPresent true, if the device must check user presence (e.g. by pressing a button)
@@ -245,10 +253,10 @@ class WebAuthn {
      * @throws WebAuthnException
      */
     public function processGet($clientDataJSON, $authenticatorData, $signature, $credentialPublicKey, $challenge, $prevSignatureCnt=null, $requireUserVerification=false, $requireUserPresent=true) {
-        require_once 'Attestation/AuthenticatorData.php';
         $authenticatorObj = new Attestation\AuthenticatorData($authenticatorData);
         $clientDataHash = \hash('sha256', $clientDataJSON, true);
         $clientData = \json_decode($clientDataJSON);
+        $challenge = $challenge instanceof ByteBuffer ? $challenge : new ByteBuffer($challenge);
 
         // https://www.w3.org/TR/webauthn/#verifying-assertion
 
@@ -276,7 +284,7 @@ class WebAuthn {
 
         // 8. Verify that the value of C.challenge matches the challenge that was sent to the
         //    authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
-        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge) {
+        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
             throw new WebAuthnException('invalid challenge', WebAuthnException::INVALID_CHALLENGE);
         }
 
@@ -376,17 +384,7 @@ class WebAuthn {
      */
     private function _createChallenge($length = 32) {
         if (!$this->_challenge) {
-            if (\function_exists('\random_bytes')) {
-                $this->_challenge = \random_bytes($length);
-
-                // fallback <php7
-            } else {
-                $crypto_strong = false;
-                $this->_challenge = \openssl_random_pseudo_bytes($length, $crypto_strong);
-                if (!$crypto_strong) {
-                    throw new WebAuthnException('cannot create crypto-strong random bytes.', WebAuthnException::CRYPTO_STRONG);
-                }
-            }
+            $this->_challenge = ByteBuffer::randomBuffer($length);
         }
         return $this->_challenge;
     }

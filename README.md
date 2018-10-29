@@ -8,9 +8,6 @@ A simple PHP WebAuthn (FIDO2) server library
 ## Manual
 See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
 
-Please remind that you'll need a way to transport binary data from PHP to JavaScript.
-This is not part of this library. Look for the /_test scripts for a simple implementation with base64 and json.
-
 ## Requirements
 * PHP >= 5.6 with [OpenSSL](http://de.php.net/manual/en/book.openssl.php)
 * Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Opera 54+, Edge 18+)

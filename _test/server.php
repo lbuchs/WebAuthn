@@ -60,15 +60,10 @@ try {
     if ($fn === 'getCreateArgs') {
         $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin');
 
-        // make sure that binary data is transmited correctly to the browser
-        $createArgs->publicKey->user->id = _binAsBase64Str($createArgs->publicKey->user->id);
-        $createArgs->publicKey->challenge = _binAsBase64Str($createArgs->publicKey->challenge);
-
-
         print(json_encode($createArgs));
 
         // save challange to session. you have to deliver it to processGet later.
-        $_SESSION['challenge'] = $WebAuthn->getChallenge();
+        $_SESSION['challenge'] = $WebAuthn->getChallenge()->getBinaryString();
 
 
 
@@ -94,17 +89,10 @@ try {
 
         $getArgs = $WebAuthn->getGetArgs($ids);
 
-        // make sure that binary data is transmited correctly to the browser
-        $getArgs->publicKey->challenge = _binAsBase64Str($getArgs->publicKey->challenge);
-        foreach ($getArgs->publicKey->allowCredentials as &$allowedCredential) {
-            $allowedCredential->id = _binAsBase64Str($allowedCredential->id);
-        }
-        unset ($allowedCredential);
-
         print(json_encode($getArgs));
 
         // save challange to session. you have to deliver it to processGet later.
-        $_SESSION['challenge'] = $WebAuthn->getChallenge();
+        $_SESSION['challenge'] = $WebAuthn->getChallenge()->getBinaryString();
 
 
 
@@ -175,18 +163,4 @@ try {
     $return->success = false;
     $return->msg = $ex->getMessage();
     print(json_encode($return));
-}
-
-
-
-
-/**
- * returns a string formated by RFC 1342
- * @param string $binary
- * @param string $charset
- * @return string
- */
-function _binAsBase64Str($binary, $charset='') {
-    // RFC 1342
-    return '?' . $charset . '?B?' . \base64_encode($binary) . '?=';
 }

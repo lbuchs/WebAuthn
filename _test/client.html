@@ -32,8 +32,10 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                     throw new Error(json.msg);
                 }
 
-               recursiveBase64StrToArrayBuffer(json);
-               return json;
+                // replace binary base64 data with ArrayBuffer. a other way to do this
+                // is the reviver function of JSON.parse()
+                recursiveBase64StrToArrayBuffer(json);
+                return json;
 
                // create credentials
             }).then(function(createCredentialArgs) {
@@ -92,7 +94,9 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                 if (json.success === false) {
                     throw new Error(json.msg);
                 }
-                
+
+                // replace binary base64 data with ArrayBuffer. a other way to do this
+                // is the reviver function of JSON.parse()
                 recursiveBase64StrToArrayBuffer(json);
                 return json;
 
@@ -132,19 +136,21 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
         }
 
         /**
-         * convert RFC 1342 base64 strings to array buffer
+         * convert RFC 1342-like base64 strings to array buffer
          * @param {mixed} obj
          * @returns {undefined}
          */
         function recursiveBase64StrToArrayBuffer(obj) {
+            let prefix = '?BINARY?B?';
+            let suffix = '?=';
             if (typeof obj === 'object') {
                 for (let key in obj) {
                     if (typeof obj[key] === 'string') {
                         let str = obj[key];
-                        if (str.substring(0,4) === '??B?' && str.substring(str.length-2) === '?=') {
-                            str = str.substring(4, str.length-2);
-
-                            let binary_string =  window.atob(str);
+                        if (str.substring(0, prefix.length) === prefix && str.substring(str.length - suffix.length) === suffix) {
+                            str = str.substring(prefix.length, str.length - suffix.length);
+                        
+                            let binary_string = window.atob(str);
                             let len = binary_string.length;
                             let bytes = new Uint8Array(len);
                             for (var i = 0; i < len; i++)        {
