@@ -2,6 +2,11 @@
 
 namespace WebAuthn;
 use WebAuthn\Binary\ByteBuffer;
+require_once 'WebAuthnException.php';
+require_once 'Binary/ByteBuffer.php';
+require_once 'Attestation/AttestationObject.php';
+require_once 'Attestation/AuthenticatorData.php';
+require_once 'CBOR/CborDecoder.php';
 
 /**
  * WebAuthn
@@ -24,12 +29,6 @@ class WebAuthn {
      * @throws WebAuthnException
      */
     public function __construct($rpName, $rpId) {
-        require_once 'WebAuthnException.php';
-        require_once 'Binary/ByteBuffer.php';
-        require_once 'Attestation/AttestationObject.php';
-        require_once 'Attestation/AuthenticatorData.php';
-        require_once 'CBOR/CborDecoder.php';
-
         $this->_rpName = $rpName;
         $this->_rpId = $rpId;
         $this->_rpIdHash = \hash('sha256', $rpId, true);

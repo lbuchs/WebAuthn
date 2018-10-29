@@ -63,7 +63,7 @@ try {
         print(json_encode($createArgs));
 
         // save challange to session. you have to deliver it to processGet later.
-        $_SESSION['challenge'] = $WebAuthn->getChallenge()->getBinaryString();
+        $_SESSION['challenge'] = $WebAuthn->getChallenge();
 
 
 
@@ -92,7 +92,7 @@ try {
         print(json_encode($getArgs));
 
         // save challange to session. you have to deliver it to processGet later.
-        $_SESSION['challenge'] = $WebAuthn->getChallenge()->getBinaryString();
+        $_SESSION['challenge'] = $WebAuthn->getChallenge();
 
 
 
