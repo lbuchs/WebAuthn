@@ -6,7 +6,7 @@
 A simple PHP WebAuthn (FIDO2) server library
 
 ## Manual
-See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
+See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example. This Library cannot handle _Client-side-resident Public Key Credential Source_ (yet), so it's not suited for passwordless experience, but for second-factor authentication (2FA).
 
 ## Requirements
 * PHP >= 5.6 with [OpenSSL](http://de.php.net/manual/en/book.openssl.php)
@@ -20,10 +20,10 @@ See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://
 * [FIDO Alliance](https://fidoalliance.org)
 
 ## FIDO2 Hardware
-* [Solo](https://solokeys.com) Open Source! 😍
 * [Yubico](https://www.yubico.com/products/yubikey-hardware/compare-yubikeys/)
+* [Solo](https://solokeys.com) Open Source! 😍
+* [Feitan](https://www.ftsafe.com/Products/FIDO2)
 * [eWBM](http://www.e-wbm.com/fido_usb.jsp)
 * [Google Titan](https://cloud.google.com/titan-security-key)
 * [Egis](https://www.egistec.com/u2f-solution/)
-* [Feitan](https://www.ftsafe.com/Products/FIDO2)
 * [OneSpan](https://www.vasco.com/products/two-factor-authenticators/hardware/one-button/digipass-secureclick.html)
