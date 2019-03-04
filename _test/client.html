@@ -41,7 +41,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             }).then(function(createCredentialArgs) {
                 console.log(createCredentialArgs);
                 return navigator.credentials.create(createCredentialArgs);
-                
+
                 // convert to base64
             }).then(function(cred) {
                 return {
@@ -51,7 +51,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                 // transfer to server
             }).then(JSON.stringify).then(function(AuthenticatorAttestationResponse) {
-                return window.fetch('server.php?fn=processCreate', {method:'POST', body: AuthenticatorAttestationResponse, cache:'no-cache'});
+                return window.fetch('server.php?fn=processCreate' + getGetParams(), {method:'POST', body: AuthenticatorAttestationResponse, cache:'no-cache'});
 
                 // convert to JSON
             }).then(function(response) {
@@ -149,7 +149,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                         let str = obj[key];
                         if (str.substring(0, prefix.length) === prefix && str.substring(str.length - suffix.length) === suffix) {
                             str = str.substring(prefix.length, str.length - suffix.length);
-                        
+
                             let binary_string = window.atob(str);
                             let len = binary_string.length;
                             let bytes = new Uint8Array(len);
@@ -178,6 +178,17 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                 binary += String.fromCharCode( bytes[ i ] );
             }
             return window.btoa(binary);
+        }
+
+        /**
+         * Get URL parameter
+         * @returns {String}
+         */
+        function getGetParams() {
+            let url = '';
+            url += '&yubico=' + (document.getElementById('cert_yubico').checked ? '1' : '0');
+            url += '&solo=' + (document.getElementById('cert_solo').checked ? '1' : '0');
+            return url;
         }
 
         /**
@@ -211,6 +222,17 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                     </tr>
                 </tbody>
             </table>
+
+            <div>&nbsp;</div>
+            <div>
+                <input type="checkbox" id="cert_yubico" name="yubico" checked>
+                <label for="cert_yubico">Validate against yubico root ca</label>
+            </div>
+
+            <div>
+                <input type="checkbox" id="cert_solo" name="solo" checked>
+                <label for="cert_solo">Validate against solokeys root ca</label>
+            </div>
         </div>
     </body>
 </html>

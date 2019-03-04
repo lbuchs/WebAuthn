@@ -1,6 +1,6 @@
 <?php
 
-/* 
+/*
  * Copyright (C) 2018 Lukas Buchs
  * license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
  *
@@ -50,13 +50,18 @@ try {
     $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', 'localhost');
 
     // add root certificates to validate new registrations
-    $WebAuthn->addRootCertificates('rootCertificates');
+    if ($_GET['solo']) {
+        $WebAuthn->addRootCertificates('rootCertificates/solo.pem');
+    }
+    if ($_GET['yubico']) {
+        $WebAuthn->addRootCertificates('rootCertificates/yubico.pem');
+    }
 
 
     // ------------------------------------
     // request for create arguments
     // ------------------------------------
-    
+
     if ($fn === 'getCreateArgs') {
         $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin');
 
