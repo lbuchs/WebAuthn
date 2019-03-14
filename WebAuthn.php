@@ -37,7 +37,7 @@ class WebAuthn {
             throw new WebAuthnException('OpenSSL-Module not installed');;
         }
 
-         if (!\in_array('SHA256', \openssl_get_md_methods()) AND !\in_array('sha256', \openssl_get_md_methods())) {
+        if (!\in_array('SHA256', \array_map('\strtoupper', \openssl_get_md_methods()))) {
             throw new WebAuthnException('SHA256 not supported by this openssl installation.');
         }
     }
@@ -291,7 +291,7 @@ class WebAuthn {
         if (!\property_exists($clientData, 'origin') || !$this->_checkOrigin($clientData->origin)) {
             throw new WebAuthnException('invalid origin', WebAuthnException::INVALID_ORIGIN);
         }
-        
+
         // 11. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.
         if ($authenticatorObj->getRpIdHash() !== $this->_rpIdHash) {
             throw new WebAuthnException('invalid rpId hash', WebAuthnException::INVALID_RELYING_PARTY);
@@ -360,7 +360,7 @@ class WebAuthn {
      */
     private function _checkOrigin($origin) {
         // https://www.w3.org/TR/webauthn/#rp-id
-        
+
         // The origin's scheme must be https
         if ($this->_rpId !== 'localhost' && \parse_url($origin, PHP_URL_SCHEME) !== 'https') {
             return false;
