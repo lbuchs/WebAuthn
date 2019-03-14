@@ -37,7 +37,7 @@ class WebAuthn {
             throw new WebAuthnException('OpenSSL-Module not installed');;
         }
 
-        if (!\in_array('SHA256', \openssl_get_md_methods())) {
+         if (!\in_array('SHA256', \openssl_get_md_methods()) AND !\in_array('sha256', \openssl_get_md_methods())) {
             throw new WebAuthnException('SHA256 not supported by this openssl installation.');
         }
     }
