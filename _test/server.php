@@ -56,6 +56,9 @@ try {
     if ($_GET['yubico']) {
         $WebAuthn->addRootCertificates('rootCertificates/yubico.pem');
     }
+    if ($_GET['hypersecu']) {
+        $WebAuthn->addRootCertificates('rootCertificates/hypersecu.pem');
+    }
 
 
     // ------------------------------------

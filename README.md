@@ -27,3 +27,4 @@ See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://
 * [Google Titan](https://cloud.google.com/titan-security-key)
 * [Egis](https://www.egistec.com/u2f-solution/)
 * [OneSpan](https://www.vasco.com/products/two-factor-authenticators/hardware/one-button/digipass-secureclick.html)
+* [Hypersecu](https://hypersecu.com/products/hyperfido)
