@@ -10,6 +10,7 @@ use WebAuthn\Binary\ByteBuffer;
  * @license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
  */
 class AuthenticatorData {
+    protected $_binary;
     protected $_rpIdHash;
     protected $_flags;
     protected $_signCount;
@@ -38,6 +39,7 @@ class AuthenticatorData {
         if (!\is_string($binary) || \strlen($binary) < 37) {
             throw new WebAuthnException('Invalid authenticatorData input', WebAuthnException::INVALID_DATA);
         }
+        $this->_binary = $binary;
 
         // Read infos from binary
         // https://www.w3.org/TR/webauthn/#sec-authenticator-data
@@ -75,6 +77,14 @@ class AuthenticatorData {
             throw  new WebAuthnException('credential data not included in authenticator data', WebAuthnException::INVALID_DATA);
         }
         return $this->_attestedCredentialData->aaguid;
+    }
+
+    /**
+     * returns the authenticatorData as binary
+     * @return string
+     */
+    public function getBinary() {
+        return $this->_binary;
     }
 
     /**
@@ -252,7 +262,7 @@ class AuthenticatorData {
         if (\strlen($credPKey->y) !== 32) {
             throw new WebAuthnException('Invalid Y-coordinate', WebAuthnException::INVALID_PUBLIC_KEY);
         }
-        
+
         return $credPKey;
     }
 
