@@ -6,7 +6,10 @@
 A simple PHP WebAuthn (FIDO2) server library
 
 ## Manual
-See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example. This Library cannot handle _Client-side-resident Public Key Credential Source_ (yet), so it's not suited for passwordless experience, but for second-factor authentication (2FA).
+See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
+
+## Client-side-resident Public Key Credential Source
+It's working! _documentation follows_
 
 ## Requirements
 * PHP >= 5.6 with [OpenSSL](http://de.php.net/manual/en/book.openssl.php)

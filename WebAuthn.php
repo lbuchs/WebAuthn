@@ -76,9 +76,10 @@ class WebAuthn {
      * @param string $userName
      * @param string $userDisplayName
      * @param int $timeout timeout in seconds
+     * @param bool $requireResidentKey true, if the key should be stored by the authentication device
      * @return \stdClass
      */
-    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20) {
+    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=true) {
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
 
@@ -86,6 +87,11 @@ class WebAuthn {
         $args->publicKey->rp = new \stdClass();
         $args->publicKey->rp->name = $this->_rpName;
         $args->publicKey->rp->id = $this->_rpId;
+
+        if ($requireResidentKey) {
+            $args->publicKey->authenticatorSelection = new \stdClass();
+            $args->publicKey->authenticatorSelection->requireResidentKey = true;
+        }
 
         // user
         $args->publicKey->user = new \stdClass();
@@ -117,31 +123,34 @@ class WebAuthn {
      * @param bool $allowBle allow Bluetooth
      * @return \stdClass
      */
-    public function getGetArgs($credentialIds, $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true) {
+    public function getGetArgs($credentialIds=array(), $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true) {
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
         $args->publicKey->timeout = $timeout * 1000; // microseconds
         $args->publicKey->challenge = $this->_createChallenge();  // binary
-        $args->publicKey->allowCredentials = array();
 
-        foreach ($credentialIds as $id) {
-            $tmp = new \stdClass();
-            $tmp->id = $id instanceof ByteBuffer ? $id : new ByteBuffer($id);  // binary
-            $tmp->transports = array();
+        if (is_array($credentialIds) && count($credentialIds) > 0) {
+            $args->publicKey->allowCredentials = array();
 
-            if ($allowUsb) {
-                $tmp->transports[] = 'usb';
-            }
-            if ($allowNfc) {
-                $tmp->transports[] = 'nfc';
-            }
-            if ($allowBle) {
-                $tmp->transports[] = 'ble';
-            }
+            foreach ($credentialIds as $id) {
+                $tmp = new \stdClass();
+                $tmp->id = $id instanceof ByteBuffer ? $id : new ByteBuffer($id);  // binary
+                $tmp->transports = array();
 
-            $tmp->type = 'public-key';
-            $args->publicKey->allowCredentials[] = $tmp;
-            unset ($tmp);
+                if ($allowUsb) {
+                    $tmp->transports[] = 'usb';
+                }
+                if ($allowNfc) {
+                    $tmp->transports[] = 'nfc';
+                }
+                if ($allowBle) {
+                    $tmp->transports[] = 'ble';
+                }
+
+                $tmp->type = 'public-key';
+                $args->publicKey->allowCredentials[] = $tmp;
+                unset ($tmp);
+            }
         }
 
         return $args;

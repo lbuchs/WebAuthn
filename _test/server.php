@@ -40,6 +40,7 @@ try {
 
     // read get argument and post body
     $fn = $_GET['fn'];
+    $requireResidentKey = !!$_GET['requireResidentKey'];
     $post = trim(file_get_contents('php://input'));
     if ($post) {
         $post = json_decode($post);
@@ -69,7 +70,7 @@ try {
     // ------------------------------------
 
     if ($fn === 'getCreateArgs') {
-        $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin');
+        $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin', 20, $requireResidentKey);
 
         print(json_encode($createArgs));
 
@@ -85,17 +86,24 @@ try {
     } else if ($fn === 'getGetArgs') {
         $ids = array();
 
-        // load registrations from session stored there by processCreate.
-        // normaly you have to load the credential Id's for a username
-        // from the database.
-        if (is_array($_SESSION['registrations'])) {
-            foreach ($_SESSION['registrations'] as $reg) {
-                $ids[] = $reg->credentialId;
+        if ($requireResidentKey) {
+            if (!is_array($_SESSION['registrations']) || count($_SESSION['registrations']) === 0) {
+                throw new Exception('we do not have any registrations in session to check the registration');
             }
-        }
 
-        if (count($ids) === 0) {
-            throw new Exception('no registrations in session.');
+        } else {
+            // load registrations from session stored there by processCreate.
+            // normaly you have to load the credential Id's for a username
+            // from the database.
+            if (is_array($_SESSION['registrations'])) {
+                foreach ($_SESSION['registrations'] as $reg) {
+                    $ids[] = $reg->credentialId;
+                }
+            }
+
+            if (count($ids) === 0) {
+                throw new Exception('no registrations in session.');
+            }
         }
 
         $getArgs = $WebAuthn->getGetArgs($ids);
@@ -168,7 +176,21 @@ try {
         $return = new stdClass();
         $return->success = true;
         print(json_encode($return));
+
+    // ------------------------------------
+    // proccess clear registrations
+    // ------------------------------------
+
+    } else if ($fn === 'clearRegistrations') {
+        $_SESSION['registrations'] = null;
+        $_SESSION['challenge'] = null;
+
+        $return = new stdClass();
+        $return->success = true;
+        $return->msg = 'all registrations deleted';
+        print(json_encode($return));
     }
+
 } catch (Throwable $ex) {
     $return = new stdClass();
     $return->success = false;

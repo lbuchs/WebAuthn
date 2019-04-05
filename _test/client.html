@@ -21,7 +21,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             }
 
             // get default args
-            window.fetch('server.php?fn=getCreateArgs', {method:'GET',cache:'no-cache'}).then(function(response) {
+            window.fetch('server.php?fn=getCreateArgs' + getGetParams(), {method:'GET',cache:'no-cache'}).then(function(response) {
                 return response.json();
 
                 // convert base64 to arraybuffer
@@ -84,7 +84,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             }
 
             // get default args
-            window.fetch('server.php?fn=getGetArgs', {method:'GET',cache:'no-cache'}).then(function(response) {
+            window.fetch('server.php?fn=getGetArgs' + getGetParams(), {method:'GET',cache:'no-cache'}).then(function(response) {
                 return response.json();
 
                 // convert base64 to arraybuffer
@@ -115,7 +115,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                 // transfer to server
             }).then(JSON.stringify).then(function(AuthenticatorAttestationResponse) {
-                return window.fetch('server.php?fn=processGet', {method:'POST', body: AuthenticatorAttestationResponse, cache:'no-cache'});
+                return window.fetch('server.php?fn=processGet' + getGetParams(), {method:'POST', body: AuthenticatorAttestationResponse, cache:'no-cache'});
 
                 // convert to json
             }).then(function(response) {
@@ -130,6 +130,21 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                }
 
                // catch errors
+            }).catch(function(err) {
+                window.alert(err.message || 'unknown error occured');
+            });
+        }
+
+        function clearregistration() {
+            window.fetch('server.php?fn=clearRegistrations' + getGetParams(), {method:'GET',cache:'no-cache'}).then(function(response) {
+                return response.json();
+
+            }).then(function(json) {
+               if (json.success) {
+                   window.alert(json.msg);
+               } else {
+                   throw new Error(json.msg);
+               }
             }).catch(function(err) {
                 window.alert(err.message || 'unknown error occured');
             });
@@ -190,6 +205,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             url += '&solo=' + (document.getElementById('cert_solo').checked ? '1' : '0');
             url += '&hypersecu=' + (document.getElementById('cert_hypersecu').checked ? '1' : '0');
             url += '&google=' + (document.getElementById('cert_google').checked ? '1' : '0');
+            url += '&requireResidentKey=' + (document.getElementById('requireResidentKey').checked ? '1' : '0');
             return url;
         }
 
@@ -221,9 +237,18 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                         <td>
                             <button type="button" onclick="checkregistration()">&#10068; check registration</button>
                         </td>
+                        <td>
+                            <button type="button" onclick="clearregistration()">&#9249; clear all registrations</button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+            <div>&nbsp;</div>
+
+            <div>
+                <input type="checkbox" id="requireResidentKey" name="requireResidentKey">
+                <label for="requireResidentKey">Use Client-side-resident Public Key Credential Source (passwordless experience)</label>
+            </div>
 
             <div>&nbsp;</div>
             <div>
