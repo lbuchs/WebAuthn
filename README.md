@@ -3,10 +3,17 @@
 [![Last Commit](https://img.shields.io/github/last-commit/lbuchs/WebAuthn.svg)](https://github.com/lbuchs/WebAuthn/commits/master)
 
 # WebAuthn
-A simple PHP WebAuthn (FIDO2) server library
+*A simple PHP WebAuthn (FIDO2) server library*
+
+Goal of this project is to provide a small, lightweight, understandable library to protect logins with security keys like Yubico or Solo.
+There is no intention to support all possible aspects from the WebAuthn specs, but rather keep it focused on u2f/fido security keys.
 
 ## Manual
 See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
+
+### Supported cryptographic algorithms
+* ECDSA w/ SHA-256 (ES256)  &#x2705;
+* RSASSA-PKCS1-v1_5 w/ SHA-256 (RS256) &#x274C;
 
 ### Supported attestation statement formats
 * android-key &#x2705;
@@ -44,7 +51,7 @@ When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds`
 
 ## FIDO2 Hardware
 * [Yubico](https://www.yubico.com/products/yubikey-hardware/compare-yubikeys/)
-* [Solo](https://solokeys.com) Open Source! ðŸ˜
+* [Solo](https://solokeys.com) Open Source!
 * [Feitan](https://www.ftsafe.com/Products/FIDO2)
 * [eWBM](http://www.e-wbm.com/fido_usb.jsp)
 * [Google Titan](https://cloud.google.com/titan-security-key)

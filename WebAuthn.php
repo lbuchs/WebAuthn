@@ -72,6 +72,7 @@ class WebAuthn {
 
     /**
      * generates the object for a key registration
+     * provide this data to navigator.credentials.create
      * @param string $userId
      * @param string $userName
      * @param string $userDisplayName
@@ -116,6 +117,7 @@ class WebAuthn {
 
     /**
      * generates the object for key validation
+     * Provide this data to navigator.credentials.get
      * @param array $credentialIds binary
      * @param int $timeout timeout in seconds
      * @param bool $allowUsb allow  USB
