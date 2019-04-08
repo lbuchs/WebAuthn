@@ -78,9 +78,11 @@ class WebAuthn {
      * @param string $userDisplayName
      * @param int $timeout timeout in seconds
      * @param bool $requireResidentKey true, if the key should be stored by the authentication device
+     * @param bool $requireUserVerification indicates that you require user verificationand will fail the operation if the response does not have the UV flag set.
+     * @param array $excludeCredentialIds a array of ids, which are already registered, to prevent re-registration
      * @return \stdClass
      */
-    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false) {
+    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false, $requireUserVerification=false, $excludeCredentialIds=array()) {
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
 
@@ -89,8 +91,9 @@ class WebAuthn {
         $args->publicKey->rp->name = $this->_rpName;
         $args->publicKey->rp->id = $this->_rpId;
 
+        $args->publicKey->authenticatorSelection = new \stdClass();
+        $args->publicKey->authenticatorSelection->userVerification = $requireUserVerification ? 'required' : 'preferred';
         if ($requireResidentKey) {
-            $args->publicKey->authenticatorSelection = new \stdClass();
             $args->publicKey->authenticatorSelection->requireResidentKey = true;
         }
 
@@ -112,6 +115,20 @@ class WebAuthn {
         $args->publicKey->timeout = $timeout * 1000; // microseconds
         $args->publicKey->challenge = $this->_createChallenge(); // binary
 
+        //prevent re-registration by specifying existing credentials
+        $args->publicKey->excludeCredentials = array();
+
+        if (is_array($excludeCredentialIds)) {
+            foreach ($excludeCredentialIds as $id) {
+                $tmp = new \stdClass();
+                $tmp->id = $id instanceof ByteBuffer ? $id : new ByteBuffer($id);  // binary
+                $tmp->type = 'public-key';
+                $tmp->transports = array('usb', 'ble', 'nfc', 'internal');
+                $args->publicKey->excludeCredentials[] = $tmp;
+                unset ($tmp);
+            }
+        }
+
         return $args;
     }
 
@@ -120,12 +137,13 @@ class WebAuthn {
      * Provide this data to navigator.credentials.get
      * @param array $credentialIds binary
      * @param int $timeout timeout in seconds
-     * @param bool $allowUsb allow  USB
-     * @param bool $allowNfc allow NFC
+     * @param bool $allowUsb allow removable USB
+     * @param bool $allowNfc allow Near Field Communication (NFC)
      * @param bool $allowBle allow Bluetooth
+     * @param bool $allowInternal allow client device-specific transport. These authenticators are not removable from the client device.
      * @return \stdClass
      */
-    public function getGetArgs($credentialIds=array(), $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true) {
+    public function getGetArgs($credentialIds=array(), $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true, $allowInternal=true) {
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
         $args->publicKey->timeout = $timeout * 1000; // microseconds
@@ -147,6 +165,9 @@ class WebAuthn {
                 }
                 if ($allowBle) {
                     $tmp->transports[] = 'ble';
+                }
+                if ($allowInternal) {
+                    $tmp->transports[] = 'internal';
                 }
 
                 $tmp->type = 'public-key';
