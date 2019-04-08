@@ -8,11 +8,31 @@ A simple PHP WebAuthn (FIDO2) server library
 ## Manual
 See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
 
-## Client-side-resident Public Key Credential Source
-It's working! _documentation follows_
+### Supported attestation statement formats
+* android-key &#x2705;
+* android-safetynet &#x274C;
+* fido-u2f &#x2705;
+* none &#x274C;
+* packed &#x2705;
+* tpm &#x274C;
+
+
+## Resident Credential
+A Client-side-resident Public Key Credential Source, or Resident Credential for short, is a public key credential source whose credential private key is stored in the authenticator, client or client device. Such client-side storage requires a resident credential capable authenticator. This is only supported by FIDO2 hardware, not by older U2F hardware. On the browser side, at the moment only Microsoft Edge 18 is supporting it. Chromium shows a message that it's not working; firefox don't show a error on registration, but on validation.
+
+### How does it work?
+With normal **server-side key** process, the user enters its username (and maybe password), then the server replys with a list of all public key credential identifier, which had been registered by the user. Then, the authenticator takes the first of the provided credential identifier, which has been issued by himself, and responses with a signature which can be validated with the public key provided on registration.
+With **client-side key** process, the user don't have to provide it's username or password, he can actually just press a 'login' button!  Then, the server don't send any identifier; rather, the authenticator is looking up in it's own memory, if there is a key saved for this relying party. If yes, he's responding the same way like he's doing if you provide a list of identifier, there is no difference in checking the registration.
+
+### How can I use it with this library?
+#### on registration
+When calling `WebAuthn\WebAuthn->getCreateArgs`, set `$requireResidentKey` to true, to notify the authenticator that he should save the registration in its memory.
+
+#### on login
+When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds` (the authenticator will look up the ids in its own memory).
 
 ## Requirements
-* PHP >= 5.6 with [OpenSSL](http://de.php.net/manual/en/book.openssl.php)
+* PHP >= 5.6 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
 * Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Opera 54+, Edge 18+)
 
 ## Infos about WebAuthn
@@ -24,7 +44,7 @@ It's working! _documentation follows_
 
 ## FIDO2 Hardware
 * [Yubico](https://www.yubico.com/products/yubikey-hardware/compare-yubikeys/)
-* [Solo](https://solokeys.com) Open Source! 😍
+* [Solo](https://solokeys.com) Open Source! ðŸ˜
 * [Feitan](https://www.ftsafe.com/Products/FIDO2)
 * [eWBM](http://www.e-wbm.com/fido_usb.jsp)
 * [Google Titan](https://cloud.google.com/titan-security-key)
