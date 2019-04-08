@@ -79,7 +79,7 @@ class WebAuthn {
      * @param bool $requireResidentKey true, if the key should be stored by the authentication device
      * @return \stdClass
      */
-    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=true) {
+    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false) {
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
 
