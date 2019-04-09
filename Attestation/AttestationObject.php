@@ -10,12 +10,10 @@ use WebAuthn\Binary\ByteBuffer;
  * @license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
  */
 class AttestationObject {
-    private $_signature;
-    private $_x5c;
     private $_authenticatorData;
     private $_attestationFormat;
 
-    public function __construct($binary) {
+    public function __construct($binary , $allowedFormats) {
         $enc = CborDecoder::decode($binary);
         // validation
         if (!\is_array($enc) || !\array_key_exists('fmt', $enc) || !is_string($enc['fmt'])) {
@@ -30,11 +28,16 @@ class AttestationObject {
             throw new WebAuthnException('invalid attestation format (authData not available)', WebAuthnException::INVALID_DATA);
         }
 
-        $this->_attestationFormat = $enc['fmt'];
         $this->_authenticatorData = new AuthenticatorData($enc['authData']->getBinaryString());
+
+        // Format ok?
+        if (!in_array($enc['fmt'], $allowedFormats)) {
+            throw new Exception('invalid atttestation format: ' . $enc['fmt'], WebAuthnException::INVALID_DATA);
+        }
 
         switch ($enc['fmt']) {
             case 'fido-u2f': $this->_attestationFormat = new Format\U2f($enc, $this->_authenticatorData); break;
+            case 'none': $this->_attestationFormat = new Format\None($enc, $this->_authenticatorData); break;
             case 'packed': $this->_attestationFormat = new Format\Packed($enc, $this->_authenticatorData); break;
             case 'android-key': $this->_attestationFormat = new Format\AndroidKey($enc, $this->_authenticatorData); break;
             case 'android-safetynet': $this->_attestationFormat = new Format\AndroidSafetyNet($enc, $this->_authenticatorData); break;

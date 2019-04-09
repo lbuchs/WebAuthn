@@ -14,11 +14,11 @@ See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://
 * android-key &#x2705;
 * android-safetynet &#x2705;
 * fido-u2f &#x2705;
-* none &#x274C;
+* none &#x2705;
 * packed &#x2705;
 * tpm &#x274C;
 
-This library supports only authenticators which are signed with a X.509 certificate. ECDAA and self attestation is not supported.
+This library supports only authenticators which are signed with a X.509 certificate (except for `none` format). ECDAA and self attestation is not supported.
 
 ## Workflow
 

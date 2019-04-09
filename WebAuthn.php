@@ -7,6 +7,7 @@ require_once 'Binary/ByteBuffer.php';
 require_once 'Attestation/AttestationObject.php';
 require_once 'Attestation/AuthenticatorData.php';
 require_once 'Attestation/Format/FormatBase.php';
+require_once 'Attestation/Format/None.php';
 require_once 'Attestation/Format/AndroidKey.php';
 require_once 'Attestation/Format/AndroidSafetyNet.php';
 require_once 'Attestation/Format/Packed.php';
@@ -26,6 +27,7 @@ class WebAuthn {
     private $_challenge;
     private $_signatureCounter;
     private $_caFiles;
+    private $_formats;
 
     /**
      * Initialize a new WebAuthn server
@@ -33,7 +35,7 @@ class WebAuthn {
      * @param string $rpId the relying party ID = the domain name
      * @throws WebAuthnException
      */
-    public function __construct($rpName, $rpId) {
+    public function __construct($rpName, $rpId, $allowedFormats=null) {
         $this->_rpName = $rpName;
         $this->_rpId = $rpId;
         $this->_rpIdHash = \hash('sha256', $rpId, true);
@@ -44,6 +46,18 @@ class WebAuthn {
 
         if (!\in_array('SHA256', \array_map('\strtoupper', \openssl_get_md_methods()))) {
             throw new WebAuthnException('SHA256 not supported by this openssl installation.');
+        }
+
+        // default value
+        if (!is_array($allowedFormats)) {
+            $allowedFormats = array('fido-u2f', 'packed', 'android-key');
+        }
+        $this->_formats = $allowedFormats;
+
+        // validate formats
+        $invalidFormats = array_diff($this->_formats, array('fido-u2f', 'packed', 'android-key', 'android-safetynet', 'none'));
+        if (!$this->_formats || $invalidFormats) {
+            throw new WebAuthnException('invalid formats on construct: ' . implode(', ', $invalidFormats));
         }
     }
 
@@ -111,10 +125,10 @@ class WebAuthn {
         $args->publicKey->pubKeyCredParams = array();
         $tmp = new \stdClass();
         $tmp->type = 'public-key';
-        $tmp->alg = -7; // SHA256
+        $tmp->alg = -7; // ES256
         $args->publicKey->pubKeyCredParams[] = $tmp;
 
-        $args->publicKey->attestation = 'direct';
+        $args->publicKey->attestation = count($this->_formats) === 1 && in_array('none', $this->_formats) ? 'none' : 'direct';
         $args->publicKey->extensions = new \stdClass();
         $args->publicKey->extensions->exts = true;
         $args->publicKey->timeout = $timeout * 1000; // microseconds
@@ -232,7 +246,7 @@ class WebAuthn {
         }
 
         // Attestation
-        $attestationObject = new Attestation\AttestationObject($attestationObject);
+        $attestationObject = new Attestation\AttestationObject($attestationObject, $this->_formats);
 
         // 9. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.
         if (!$attestationObject->validateRpIdHash($this->_rpIdHash)) {

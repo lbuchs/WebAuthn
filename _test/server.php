@@ -46,9 +46,30 @@ try {
         $post = json_decode($post);
     }
 
+    // Formats
+    $formats = array();
+    if ($_GET['fmt_android-key']) {
+        $formats[] = 'android-key';
+    }
+    if ($_GET['fmt_android-safetynet']) {
+        $formats[] = 'android-safetynet';
+    }
+    if ($_GET['fmt_fido-u2f']) {
+        $formats[] = 'fido-u2f';
+    }
+    if ($_GET['fmt_none']) {
+        $formats[] = 'none';
+    }
+    if ($_GET['fmt_packed']) {
+        $formats[] = 'packed';
+    }
+    if ($_GET['fmt_tpm']) {
+        $formats[] = 'tpm';
+    }
+
     // new Instance of the server library.
     // make sure that $rpId is the domain name.
-    $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', 'localhost');
+    $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', 'localhost', $formats);
 
     // add root certificates to validate new registrations
     if ($_GET['solo']) {
