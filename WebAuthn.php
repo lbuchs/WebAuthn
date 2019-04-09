@@ -6,6 +6,11 @@ require_once 'WebAuthnException.php';
 require_once 'Binary/ByteBuffer.php';
 require_once 'Attestation/AttestationObject.php';
 require_once 'Attestation/AuthenticatorData.php';
+require_once 'Attestation/Format/FormatBase.php';
+require_once 'Attestation/Format/AndroidKey.php';
+require_once 'Attestation/Format/AndroidSafetyNet.php';
+require_once 'Attestation/Format/Packed.php';
+require_once 'Attestation/Format/U2f.php';
 require_once 'CBOR/CborDecoder.php';
 
 /**

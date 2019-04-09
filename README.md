@@ -5,23 +5,20 @@
 # WebAuthn
 *A simple PHP WebAuthn (FIDO2) server library*
 
-Goal of this project is to provide a small, lightweight, understandable library to protect logins with security keys like Yubico or Solo.
-There is no intention to support all possible aspects from the WebAuthn specs, but rather keep it focused on u2f/fido security keys.
+Goal of this project is to provide a small, lightweight, understandable library to protect logins with security keys like Yubico or Solo or fingerprint on Android.
 
 ## Manual
 See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
 
-### Supported cryptographic algorithms
-* ECDSA w/ SHA-256 (ES256)  &#x2705;
-* RSASSA-PKCS1-v1_5 w/ SHA-256 (RS256) &#x274C;
-
 ### Supported attestation statement formats
 * android-key &#x2705;
-* android-safetynet &#x274C;
+* android-safetynet &#x2705;
 * fido-u2f &#x2705;
 * none &#x274C;
 * packed &#x2705;
 * tpm &#x274C;
+
+This library supports only authenticators which are signed with a X.509 certificate. ECDAA and self attestation is not supported.
 
 ## Workflow
 

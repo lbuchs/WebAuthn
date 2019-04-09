@@ -1,0 +1,86 @@
+<?php
+
+
+namespace WebAuthn\Attestation\Format;
+use \WebAuthn\WebAuthnException;
+use WebAuthn\Binary\ByteBuffer;
+
+class Packed extends FormatBase {
+    private static $_SHA256_cose_identifier = -7;
+
+    private $_signature;
+    private $_x5c;
+
+    public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
+        parent::__construct($AttestionObject, $authenticatorData);
+
+        // check u2f data
+        $attStmt = $this->_attestationObject['attStmt'];
+
+        if (\array_key_exists('alg', $attStmt) && $attStmt['alg'] !== self::$_SHA256_cose_identifier) { // SHA256
+            throw new WebAuthnException('only SHA256 acceptable but got: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
+        }
+
+        if (!\array_key_exists('sig', $attStmt) || !\is_object($attStmt['sig']) || !($attStmt['sig'] instanceof ByteBuffer)) {
+            throw new WebAuthnException('no signature found', WebAuthnException::INVALID_DATA);
+        }
+
+        if (!\array_key_exists('x5c', $attStmt) || !\is_array($attStmt['x5c']) || \count($attStmt['x5c']) < 1) {
+            throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
+        }
+
+        if (!\is_object($attStmt['x5c'][0]) || !($attStmt['x5c'][0] instanceof ByteBuffer)) {
+            throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
+        }
+
+        $this->_signature = $attStmt['sig']->getBinaryString();
+        $this->_x5c = $attStmt['x5c'][0]->getBinaryString();
+    }
+
+
+    /*
+     * returns the key certificate in PEM format
+     * @return string
+     */
+    public function getCertificatePem() {
+        $pem = '-----BEGIN CERTIFICATE-----' . "\n";
+        $pem .= \chunk_split(\base64_encode($this->_x5c), 64, "\n");
+        $pem .= '-----END CERTIFICATE-----' . "\n";
+        return $pem;
+    }
+
+    /**
+     * @param string $clientDataHash
+     */
+    public function validateAttestation($clientDataHash) {
+        $publicKey = \openssl_pkey_get_public($this->getCertificatePem());
+
+        if ($publicKey === false) {
+            throw new WebAuthnException('invalid public key: ' . \openssl_error_string(), WebAuthnException::INVALID_PUBLIC_KEY);
+        }
+
+            // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
+            // using the attestation public key in attestnCert with the algorithm specified in alg.
+            $dataToVerify = $this->_authenticatorData->getBinary();
+            $dataToVerify .= $clientDataHash;
+
+
+        // check certificate
+        return \openssl_verify($dataToVerify, $this->_signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
+    }
+
+    /**
+     * validates the certificate against root certificates
+     * @param array $rootCas
+     * @return boolean
+     * @throws WebAuthnException
+     */
+    public function validateRootCertificate($rootCas) {
+        $v = \openssl_x509_checkpurpose($this->getCertificatePem(), -1, $rootCas);
+        if ($v === -1) {
+            throw new WebAuthnException('error on validating root certificate: ' . \openssl_error_string(), WebAuthnException::CERTIFICATE_NOT_TRUSTED);
+        }
+        return $v;
+    }
+}
+
