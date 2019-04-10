@@ -32,7 +32,7 @@ class AttestationObject {
 
         // Format ok?
         if (!in_array($enc['fmt'], $allowedFormats)) {
-            throw new Exception('invalid atttestation format: ' . $enc['fmt'], WebAuthnException::INVALID_DATA);
+            throw new WebAuthnException('invalid atttestation format: ' . $enc['fmt'], WebAuthnException::INVALID_DATA);
         }
 
         switch ($enc['fmt']) {
@@ -41,7 +41,7 @@ class AttestationObject {
             case 'packed': $this->_attestationFormat = new Format\Packed($enc, $this->_authenticatorData); break;
             case 'android-key': $this->_attestationFormat = new Format\AndroidKey($enc, $this->_authenticatorData); break;
             case 'android-safetynet': $this->_attestationFormat = new Format\AndroidSafetyNet($enc, $this->_authenticatorData); break;
-            default: throw new Exception('invalid atttestation format: ' . $enc['fmt'], WebAuthnException::INVALID_DATA);
+            default: throw new WebAuthnException('invalid atttestation format: ' . $enc['fmt'], WebAuthnException::INVALID_DATA);
         }
     }
 

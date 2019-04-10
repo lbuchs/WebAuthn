@@ -82,7 +82,7 @@ try {
         $WebAuthn->addRootCertificates('rootCertificates/hypersecu.pem');
     }
     if ($_GET['google']) {
-        $WebAuthn->addRootCertificates('rootCertificates/googleTrust.pem');
+        $WebAuthn->addRootCertificates('rootCertificates/globalSign.pem');
         $WebAuthn->addRootCertificates('rootCertificates/googleHardware.pem');
     }
 

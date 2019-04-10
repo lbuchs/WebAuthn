@@ -78,6 +78,11 @@ class U2f extends FormatBase {
      * @throws WebAuthnException
      */
     public function validateRootCertificate($rootCas) {
+        $chainC = $this->_createX5cChainFile();
+        if ($chainC) {
+            $rootCas[] = $chainC;
+        }
+
         $v = \openssl_x509_checkpurpose($this->getCertificatePem(), -1, $rootCas);
         if ($v === -1) {
             throw new WebAuthnException('error on validating root certificate: ' . \openssl_error_string(), WebAuthnException::CERTIFICATE_NOT_TRUSTED);

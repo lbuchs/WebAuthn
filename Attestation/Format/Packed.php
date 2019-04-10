@@ -35,6 +35,13 @@ class Packed extends FormatBase {
 
         $this->_signature = $attStmt['sig']->getBinaryString();
         $this->_x5c = $attStmt['x5c'][0]->getBinaryString();
+
+        if (count($attStmt['x5c']) > 1) {
+            for ($i=1; $i<count($attStmt['x5c']); $i++) {
+                $this->_x5c_chain[] = $attStmt['x5c'][$i]->getBinaryString();
+            }
+            unset ($i);
+        }
     }
 
 
@@ -43,10 +50,7 @@ class Packed extends FormatBase {
      * @return string
      */
     public function getCertificatePem() {
-        $pem = '-----BEGIN CERTIFICATE-----' . "\n";
-        $pem .= \chunk_split(\base64_encode($this->_x5c), 64, "\n");
-        $pem .= '-----END CERTIFICATE-----' . "\n";
-        return $pem;
+        return $this->_createCertificatePem($this->_x5c);
     }
 
     /**
@@ -76,6 +80,11 @@ class Packed extends FormatBase {
      * @throws WebAuthnException
      */
     public function validateRootCertificate($rootCas) {
+        $chainC = $this->_createX5cChainFile();
+        if ($chainC) {
+            $rootCas[] = $chainC;
+        }
+
         $v = \openssl_x509_checkpurpose($this->getCertificatePem(), -1, $rootCas);
         if ($v === -1) {
             throw new WebAuthnException('error on validating root certificate: ' . \openssl_error_string(), WebAuthnException::CERTIFICATE_NOT_TRUSTED);

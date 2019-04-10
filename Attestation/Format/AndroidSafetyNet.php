@@ -15,14 +15,14 @@ class AndroidSafetyNet extends FormatBase {
     public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
         parent::__construct($AttestionObject, $authenticatorData);
 
-        // check u2f data
+        // check data
         $attStmt = $this->_attestationObject['attStmt'];
 
-        if (!array_key_exists('ver', $attStmt) || !$attStmt['ver']) {
+        if (!\array_key_exists('ver', $attStmt) || !$attStmt['ver']) {
             throw new WebAuthnException('invalid Android Safety Net Format', WebAuthnException::INVALID_DATA);
         }
 
-        if (!array_key_exists('response', $attStmt) || !($attStmt['response'] instanceof ByteBuffer)) {
+        if (!\array_key_exists('response', $attStmt) || !($attStmt['response'] instanceof ByteBuffer)) {
             throw new WebAuthnException('invalid Android Safety Net Format', WebAuthnException::INVALID_DATA);
         }
 
@@ -30,9 +30,9 @@ class AndroidSafetyNet extends FormatBase {
 
         // Response is a JWS [RFC7515] object in Compact Serialization.
         // JWSs have three segments separated by two period ('.') characters
-        $parts = explode('.', $response);
+        $parts = \explode('.', $response);
         unset ($response);
-        if (count($parts) !== 3) {
+        if (\count($parts) !== 3) {
             throw new WebAuthnException('invalid JWS data', WebAuthnException::INVALID_DATA);
         }
 
@@ -42,8 +42,8 @@ class AndroidSafetyNet extends FormatBase {
         $this->_signedValue = $parts[0] . '.' . $parts[1];
         unset ($parts);
 
-        $header = json_decode($header);
-        $payload = json_decode($payload);
+        $header = \json_decode($header);
+        $payload = \json_decode($payload);
 
         if (!($header instanceof \stdClass)) {
             throw new WebAuthnException('invalid JWS header', WebAuthnException::INVALID_DATA);
@@ -57,12 +57,19 @@ class AndroidSafetyNet extends FormatBase {
         }
 
         // algorithm
-        if (!in_array($header->alg, array('RS256', 'ES256'))) {
+        if (!\in_array($header->alg, array('RS256', 'ES256'))) {
             throw new WebAuthnException('invalid JWS algorithm ' . $header->alg, WebAuthnException::INVALID_DATA);
         }
 
-        $this->_x5c = base64_decode($header->x5c[0]);
+        $this->_x5c = \base64_decode($header->x5c[0]);
         $this->_payload = $payload;
+
+        if (count($header->x5c) > 1) {
+            for ($i=1; $i<count($header->x5c); $i++) {
+                $this->_x5c_chain[] = \base64_decode($header->x5c[$i]);
+            }
+            unset ($i);
+        }
     }
 
 
@@ -71,10 +78,7 @@ class AndroidSafetyNet extends FormatBase {
      * @return string
      */
     public function getCertificatePem() {
-        $pem = '-----BEGIN CERTIFICATE-----' . "\n";
-        $pem .= \chunk_split(\base64_encode($this->_x5c), 64, "\n");
-        $pem .= '-----END CERTIFICATE-----' . "\n";
-        return $pem;
+        return $this->_createCertificatePem($this->_x5c);
     }
 
     /**
@@ -85,13 +89,13 @@ class AndroidSafetyNet extends FormatBase {
 
         // Verify that the nonce in the response is identical to the Base64 encoding
         // of the SHA-256 hash of the concatenation of authenticatorData and clientDataHash.
-        if (!$this->_payload->nonce || $this->_payload->nonce !== base64_encode(hash('SHA256', $this->_authenticatorData->getBinary() . $clientDataHash, true))) {
+        if (!$this->_payload->nonce || $this->_payload->nonce !== \base64_encode(\hash('SHA256', $this->_authenticatorData->getBinary() . $clientDataHash, true))) {
             throw new WebAuthnException('invalid nonce in JWS payload', WebAuthnException::INVALID_DATA);
         }
 
         // Verify that attestationCert is issued to the hostname "attest.android.com"
-        $certInfo = openssl_x509_parse($this->getCertificatePem());
-        if (!is_array($certInfo) || !$certInfo['subject'] || $certInfo['subject']['CN'] !== 'attest.android.com') {
+        $certInfo = \openssl_x509_parse($this->getCertificatePem());
+        if (!\is_array($certInfo) || !$certInfo['subject'] || $certInfo['subject']['CN'] !== 'attest.android.com') {
             throw new WebAuthnException('invalid certificate CN in JWS (' . $certInfo['subject']['CN']. ')', WebAuthnException::INVALID_DATA);
         }
 
@@ -112,9 +116,10 @@ class AndroidSafetyNet extends FormatBase {
      * @throws WebAuthnException
      */
     public function validateRootCertificate($rootCas) {
-
-        // TODO: write certificates from x5c array to file, if they are not self signed,
-        //       and pass dem to checkpurpose to be able to validate the full chain.
+        $chainC = $this->_createX5cChainFile();
+        if ($chainC) {
+            $rootCas[] = $chainC;
+        }
 
         $v = \openssl_x509_checkpurpose($this->getCertificatePem(), -1, $rootCas);
         if ($v === -1) {
