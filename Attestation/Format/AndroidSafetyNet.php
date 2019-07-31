@@ -2,7 +2,7 @@
 
 
 namespace WebAuthn\Attestation\Format;
-use \WebAuthn\WebAuthnException;
+use WebAuthn\WebAuthnException;
 use WebAuthn\Binary\ByteBuffer;
 
 class AndroidSafetyNet extends FormatBase {

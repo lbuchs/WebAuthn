@@ -2,7 +2,7 @@
 
 
 namespace WebAuthn\CBOR;
-use \WebAuthn\WebAuthnException;
+use WebAuthn\WebAuthnException;
 use WebAuthn\Binary\ByteBuffer;
 
 /**
@@ -26,7 +26,7 @@ class CborDecoder {
      * @return mixed
      * @throws WebAuthnException
      */
-    public static function decode($bufOrBin) {        
+    public static function decode($bufOrBin) {
         $buf = $bufOrBin instanceof ByteBuffer ? $bufOrBin : new ByteBuffer($bufOrBin);
 
         $offset = 0;
@@ -184,7 +184,7 @@ class CborDecoder {
 
             case self::CBOR_MAJOR_MAP:
                 return self::_parseMap($buf, $offset, $val);
-                
+
             case self::CBOR_MAJOR_TAG:
                 return self::_parseItem($buf, $offset); // 1 embedded data item
         }
@@ -203,7 +203,7 @@ class CborDecoder {
             if (!\is_int($mapKey) && !\is_string($mapKey)) {
                 throw new WebAuthnException('Can only use strings or integers as map keys', WebAuthnException::CBOR);
             }
-            
+
             $map[$mapKey] = $mapVal; // todo dup
         }
         return $map;
@@ -214,7 +214,7 @@ class CborDecoder {
         for ($i = 0; $i < $count; $i++) {
             $arr[] = self::_parseItem($buf, $offset);
         }
-        
+
         return $arr;
     }
 }

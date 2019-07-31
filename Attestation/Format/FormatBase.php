@@ -2,8 +2,7 @@
 
 
 namespace WebAuthn\Attestation\Format;
-use \WebAuthn\WebAuthnException;
-use WebAuthn\Binary\ByteBuffer;
+use WebAuthn\WebAuthnException;
 
 
 abstract class FormatBase {

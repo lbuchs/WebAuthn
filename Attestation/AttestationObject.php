@@ -1,8 +1,8 @@
 <?php
 
 namespace WebAuthn\Attestation;
-use \WebAuthn\WebAuthnException;
-use \WebAuthn\CBOR\CborDecoder;
+use WebAuthn\WebAuthnException;
+use WebAuthn\CBOR\CborDecoder;
 use WebAuthn\Binary\ByteBuffer;
 
 /**

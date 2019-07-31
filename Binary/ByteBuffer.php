@@ -2,7 +2,7 @@
 
 
 namespace WebAuthn\Binary;
-use \WebAuthn\WebAuthnException;
+use WebAuthn\WebAuthnException;
 
 /**
  * Modified version of https://github.com/madwizard-thomas/webauthn-server/blob/master/src/Format/ByteBuffer.php

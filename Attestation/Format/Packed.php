@@ -2,7 +2,7 @@
 
 
 namespace WebAuthn\Attestation\Format;
-use \WebAuthn\WebAuthnException;
+use WebAuthn\WebAuthnException;
 use WebAuthn\Binary\ByteBuffer;
 
 class Packed extends FormatBase {
