@@ -96,7 +96,7 @@ abstract class FormatBase {
                     }
 
                     if (!$selfSigned) {
-                        $content = "\n" . $this->_createCertificatePem($x5c) . "\n";
+                        $content .= "\n" . $this->_createCertificatePem($x5c) . "\n";
                     }
                 }
             }
@@ -104,8 +104,9 @@ abstract class FormatBase {
 
         if ($content) {
             $this->_x5c_tempFile = \sys_get_temp_dir() . '/x5c_chain_' . \base_convert(\rand(), 10, 36) . '.pem';
-            \file_put_contents($this->_x5c_tempFile, $content);
-            return $this->_x5c_tempFile;
+            if (\file_put_contents($this->_x5c_tempFile, $content) !== false) {
+                return $this->_x5c_tempFile;
+            }
         }
 
         return null;
