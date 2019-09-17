@@ -54,6 +54,66 @@ class AttestationObject {
     }
 
     /**
+     * returns the certificate chain as PEM
+     * @return string|null
+     */
+    public function getCertificateChain() {
+        return $this->_attestationFormat->getCertificateChain();
+    }
+
+    /**
+     * return the certificate issuer as string
+     * @return string
+     */
+    public function getCertificateIssuer() {
+        $pem = $this->getCertificatePem();
+        $issuer = '';
+        if ($pem) {
+            $certInfo = \openssl_x509_parse($pem);
+            if (\is_array($certInfo) && \is_array($certInfo['issuer'])) {
+                if ($certInfo['issuer']['CN']) {
+                    $issuer .= \trim($certInfo['issuer']['CN']);
+                }
+                if ($certInfo['issuer']['O'] || $certInfo['issuer']['OU']) {
+                    if ($issuer) {
+                        $issuer .= ' (' . \trim($certInfo['issuer']['O'] . ' ' . $certInfo['issuer']['OU']) . ')';
+                    } else {
+                        $issuer .= \trim($certInfo['issuer']['O'] . ' ' . $certInfo['issuer']['OU']);
+                    }
+                }
+            }
+        }
+
+        return $issuer;
+    }
+
+    /**
+     * return the certificate subject as string
+     * @return string
+     */
+    public function getCertificateSubject() {
+        $pem = $this->getCertificatePem();
+        $subject = '';
+        if ($pem) {
+            $certInfo = \openssl_x509_parse($pem);
+            if (\is_array($certInfo) && \is_array($certInfo['subject'])) {
+                if ($certInfo['subject']['CN']) {
+                    $subject .= \trim($certInfo['subject']['CN']);
+                }
+                if ($certInfo['subject']['O'] || $certInfo['subject']['OU']) {
+                    if ($subject) {
+                        $subject .= ' (' . \trim($certInfo['subject']['O'] . ' ' . $certInfo['subject']['OU']) . ')';
+                    } else {
+                        $subject .= \trim($certInfo['subject']['O'] . ' ' . $certInfo['subject']['OU']);
+                    }
+                }
+            }
+        }
+
+        return $subject;
+    }
+
+    /**
      * returns the key certificate in PEM format
      * @return string
      */

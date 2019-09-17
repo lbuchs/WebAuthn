@@ -22,7 +22,7 @@ abstract class FormatBase {
     }
 
     /**
-     *
+     * 
      */
     public function __destruct() {
         // delete X.509 chain certificate file after use
@@ -31,7 +31,18 @@ abstract class FormatBase {
         }
     }
 
-        /**
+    /**
+     * returns the certificate chain in PEM format
+     * @return string|null
+     */
+    public function getCertificateChain() {
+        if (\is_file($this->_x5c_tempFile)) {
+            return \file_get_contents($this->_x5c_tempFile);
+        }
+        return null;
+    }
+
+    /**
      * returns the key X.509 certificate in PEM format
      * @return string
      */

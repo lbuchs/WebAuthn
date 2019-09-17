@@ -69,6 +69,8 @@ class AuthenticatorData {
      * Authenticator Attestation Globally Unique Identifier, a unique number
      * that identifies the model of the authenticator (not the specific instance
      * of the authenticator)
+     * The aaguid may be 0 if the user is using a old u2f device and/or if
+     * the browser is using the fido-u2f format.
      * @return string
      * @throws WebAuthnException
      */
@@ -203,15 +205,15 @@ class AuthenticatorData {
      */
     private function _readAttestData($binary, &$endOffset) {
         $attestedCData = new \stdClass();
-        if (strlen($binary) <= 55) {
+        if (\strlen($binary) <= 55) {
             throw new WebAuthnException('Attested data should be present but is missing', WebAuthnException::INVALID_DATA);
         }
 
         // The AAGUID of the authenticator
-        $attestedCData->aaguid = \substr($binary,37, 16);
+        $attestedCData->aaguid = \substr($binary, 37, 16);
 
         //Byte length L of Credential ID, 16-bit unsigned big-endian integer.
-        $length = unpack('nlength', \substr($binary, 53, 2))['length'];
+        $length = \unpack('nlength', \substr($binary, 53, 2))['length'];
         $attestedCData->credentialId = \substr($binary, 55, $length);
 
         // set end offset
@@ -274,7 +276,7 @@ class AuthenticatorData {
      */
     private function _readExtensionData($binary) {
         $ext = CborDecoder::decode($binary);
-        if (!is_array($ext)) {
+        if (!\is_array($ext)) {
             throw new WebAuthnException('invalid extension data', WebAuthnException::INVALID_DATA);
         }
 
