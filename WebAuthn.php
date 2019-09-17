@@ -107,13 +107,6 @@ class WebAuthn {
      * @return \stdClass
      */
     public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false, $requireUserVerification=false, $excludeCredentialIds=array()) {
-        $args = new \stdClass();
-        $args->publicKey = new \stdClass();
-
-        // relying party
-        $args->publicKey->rp = new \stdClass();
-        $args->publicKey->rp->name = $this->_rpName;
-        $args->publicKey->rp->id = $this->_rpId;
 
         // validate User Verification Requirement
         if (\is_bool($requireUserVerification)) {
@@ -123,6 +116,14 @@ class WebAuthn {
         } else {
             $requireUserVerification = 'preferred';
         }
+
+        $args = new \stdClass();
+        $args->publicKey = new \stdClass();
+
+        // relying party
+        $args->publicKey->rp = new \stdClass();
+        $args->publicKey->rp->name = $this->_rpName;
+        $args->publicKey->rp->id = $this->_rpId;
 
         $args->publicKey->authenticatorSelection = new \stdClass();
         $args->publicKey->authenticatorSelection->userVerification = $requireUserVerification;
@@ -174,13 +175,30 @@ class WebAuthn {
      * @param bool $allowNfc allow Near Field Communication (NFC)
      * @param bool $allowBle allow Bluetooth
      * @param bool $allowInternal allow client device-specific transport. These authenticators are not removable from the client device.
+     * @param bool|string $requireUserVerification indicates that you require user verification and will fail the operation
+     *                                             if the response does not have the UV flag set.
+     *                                             Valid values:
+     *                                             true = required
+     *                                             false = preferred
+     *                                             string 'required' 'preferred' 'discouraged'
      * @return \stdClass
      */
-    public function getGetArgs($credentialIds=array(), $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true, $allowInternal=true) {
+    public function getGetArgs($credentialIds=array(), $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true, $allowInternal=true, $requireUserVerification=false) {
+
+        // validate User Verification Requirement
+        if (\is_bool($requireUserVerification)) {
+            $requireUserVerification = $requireUserVerification ? 'required' : 'preferred';
+        } else if (\is_string($requireUserVerification) && \in_array(\strtolower($requireUserVerification), ['required', 'preferred', 'discouraged'])) {
+            $requireUserVerification = \strtolower($requireUserVerification);
+        } else {
+            $requireUserVerification = 'preferred';
+        }
+
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
         $args->publicKey->timeout = $timeout * 1000; // microseconds
         $args->publicKey->challenge = $this->_createChallenge();  // binary
+        $args->publicKey->userVerification = $requireUserVerification;
 
         if (\is_array($credentialIds) && \count($credentialIds) > 0) {
             $args->publicKey->allowCredentials = array();
