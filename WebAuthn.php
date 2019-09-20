@@ -86,6 +86,9 @@ class WebAuthn {
      * @return ByteBuffer
      */
     public function getChallenge() {
+        if (isset($this->useBase64UrlEncoding) && $this->useBase64UrlEncoding) {
+            return $this->base64url_decode($this->_challenge);
+        }
         return $this->_challenge;
     }
 
@@ -133,14 +136,26 @@ class WebAuthn {
 
         // user
         $args->publicKey->user = new \stdClass();
-        $args->publicKey->user->id = new ByteBuffer($userId); // binary
+        if (isset($this->useBase64UrlEncoding) && $this->useBase64UrlEncoding) {
+            $args->publicKey->user->id = $this->base64url_encode($userId);
+        } else {
+            $args->publicKey->user->id = new ByteBuffer($userId); // binary
+        }
         $args->publicKey->user->name = $userName;
         $args->publicKey->user->displayName = $userDisplayName;
 
         $args->publicKey->pubKeyCredParams = array();
+        /*
+         * https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+         */
         $tmp = new \stdClass();
         $tmp->type = 'public-key';
         $tmp->alg = -7; // ES256
+        $args->publicKey->pubKeyCredParams[] = $tmp;
+
+        $tmp = new \stdClass();
+        $tmp->type = 'public-key';
+        $tmp->alg = -257; // RS256 Windows Hello support
         $args->publicKey->pubKeyCredParams[] = $tmp;
 
         $args->publicKey->attestation = \count($this->_formats) === 1 && \in_array('none', $this->_formats) ? 'none' : 'direct';
@@ -205,7 +220,11 @@ class WebAuthn {
 
             foreach ($credentialIds as $id) {
                 $tmp = new \stdClass();
-                $tmp->id = $id instanceof ByteBuffer ? $id : new ByteBuffer($id);  // binary
+                if (isset($this->useBase64UrlEncoding) && $this->useBase64UrlEncoding) {
+                    $tmp->id = $this->base64url_encode($id);
+                } else {
+                    $tmp->id = $id instanceof ByteBuffer ? $id : new ByteBuffer($id);  // binary
+                }
                 $tmp->transports = array();
 
                 if ($allowUsb) {
@@ -268,7 +287,7 @@ class WebAuthn {
         }
 
         // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
-        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
+        if (!\property_exists($clientData, 'challenge') || $this->base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
             throw new WebAuthnException('invalid challenge', WebAuthnException::INVALID_CHALLENGE);
         }
 
@@ -370,7 +389,7 @@ class WebAuthn {
 
         // 8. Verify that the value of C.challenge matches the challenge that was sent to the
         //    authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
-        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
+        if (!\property_exists($clientData, 'challenge') || $this->base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
             throw new WebAuthnException('invalid challenge', WebAuthnException::INVALID_CHALLENGE);
         }
 
@@ -435,8 +454,18 @@ class WebAuthn {
      * @param string $data
      * @return string
      */
-    private function _base64url_decode($data) {
+    public function base64url_decode($data) {
         return \base64_decode(\strtr($data, '-_', '+/') . \str_repeat('=', 3 - (3 + \strlen($data)) % 4));
+    }
+
+    /**
+     * encode base64 url
+     * @param string $data
+     *
+     * @return string
+     */
+    public function base64url_encode($data) {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
     /**
@@ -471,6 +500,9 @@ class WebAuthn {
     private function _createChallenge($length = 32) {
         if (!$this->_challenge) {
             $this->_challenge = ByteBuffer::randomBuffer($length);
+            if (isset($this->useBase64UrlEncoding) && $this->useBase64UrlEncoding) {
+                $this->_challenge = $this->base64url_encode($this->_challenge->getBinaryString());
+            }
         }
         return $this->_challenge;
     }
