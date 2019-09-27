@@ -153,10 +153,13 @@ class WebAuthn {
         $tmp->alg = -7; // ES256
         $args->publicKey->pubKeyCredParams[] = $tmp;
 
-        $tmp = new \stdClass();
+        /**
+         * Not yet implemented and tested
+         */
+        /*$tmp = new \stdClass();
         $tmp->type = 'public-key';
         $tmp->alg = -257; // RS256 Windows Hello support
-        $args->publicKey->pubKeyCredParams[] = $tmp;
+        $args->publicKey->pubKeyCredParams[] = $tmp;*/
 
         $args->publicKey->attestation = \count($this->_formats) === 1 && \in_array('none', $this->_formats) ? 'none' : 'direct';
         $args->publicKey->extensions = new \stdClass();
