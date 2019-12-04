@@ -67,9 +67,17 @@ try {
         $formats[] = 'tpm';
     }
 
+    $rpId = 'localhost';
+    if ($_GET['rpId']) {
+        $rpId = filter_input(INPUT_GET, 'rpId', FILTER_VALIDATE_DOMAIN);
+        if ($rpId === false) {
+            throw new Exception('invalid relying party ID');
+        }
+    }
+
     // new Instance of the server library.
     // make sure that $rpId is the domain name.
-    $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', 'localhost', $formats);
+    $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', $rpId, $formats);
 
     // add root certificates to validate new registrations
     if ($_GET['solo']) {

@@ -214,6 +214,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             url += '&fmt_none=' + (document.getElementById('fmt_none').checked ? '1' : '0');
             url += '&fmt_packed=' + (document.getElementById('fmt_packed').checked ? '1' : '0');
             url += '&fmt_tpm=' + (document.getElementById('fmt_tpm').checked ? '1' : '0');
+            url += '&rpId=' + encodeURIComponent(document.getElementById('rpId').value);
 
             return url;
         }
@@ -257,6 +258,15 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             <div>
                 <input type="checkbox" id="requireResidentKey" name="requireResidentKey">
                 <label for="requireResidentKey">Use Client-side-resident Public Key Credential Source</label>
+            </div>
+
+            <div>&nbsp;</div>
+            <div style="font-weight: bold">Relying Party</div>
+            <p style="margin:0 0 5px 0;font-size:0.9em;font-style: italic;">A valid domain string that identifies the
+                WebAuthn Relying Party<br/>on whose behalf a given registration or authentication ceremony is being performed.</p>
+            <div>
+                <label for="rpId">RP ID:</label>
+                <input type="text" id="rpId" name="rpId" value="localhost">
             </div>
 
             <div>&nbsp;</div>

@@ -199,6 +199,7 @@ class WebAuthn {
         $args->publicKey->timeout = $timeout * 1000; // microseconds
         $args->publicKey->challenge = $this->_createChallenge();  // binary
         $args->publicKey->userVerification = $requireUserVerification;
+        $args->publicKey->rpId = $this->_rpId;
 
         if (\is_array($credentialIds) && \count($credentialIds) > 0) {
             $args->publicKey->allowCredentials = array();
