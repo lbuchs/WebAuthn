@@ -216,6 +216,16 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             url += '&fmt_tpm=' + (document.getElementById('fmt_tpm').checked ? '1' : '0');
             url += '&rpId=' + encodeURIComponent(document.getElementById('rpId').value);
 
+            if (document.getElementById('userVerification_required').checked) {
+                url += '&userVerification=required';
+
+            } else if (document.getElementById('userVerification_preferred').checked) {
+                url += '&userVerification=preferred';
+
+            } else if (document.getElementById('userVerification_discouraged').checked) {
+                url += '&userVerification=discouraged';
+            }
+
             return url;
         }
 
@@ -227,11 +237,14 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             if (location.protocol !== 'https:' && location.host !== 'localhost') {
                 location.href = location.href.replace('http', 'https');
             }
+            if (!document.getElementById('rpId').value) {
+                document.getElementById('rpId').value = location.hostname;
+            }
         }
 
         </script>
     </head>
-    <body style="font-family:sans-serif;">
+    <body style="font-family:sans-serif;margin: 0 20px;">
         <h1 style="margin: 40px 10px 2px 0;">lbuchs/WebAuthn</h1>
         <div style="font-style: italic;">A simple PHP WebAuthn (FIDO2) server library.</div>
         <div>&nbsp;</div>
@@ -266,7 +279,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                 WebAuthn Relying Party<br/>on whose behalf a given registration or authentication ceremony is being performed.</p>
             <div>
                 <label for="rpId">RP ID:</label>
-                <input type="text" id="rpId" name="rpId" value="localhost">
+                <input type="text" id="rpId" name="rpId" value="">
             </div>
 
             <div>&nbsp;</div>
@@ -301,6 +314,23 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                 <label for="fmt_tpm">tpm</label>
             </div>
 
+            <div>&nbsp;</div>
+            <div style="font-weight: bold">user verification</div>
+            <div>
+                <input type="radio" id="userVerification_required" name="userVerification">
+                <label for="userVerification_required">required <i>User verification is required (e.g. by pin), the operation will fail if the response does not have the UV flag.</i></label>
+            </div>
+
+            <div>
+                <input type="radio" id="userVerification_preferred" name="userVerification" checked>
+                <label for="userVerification_preferred">preferred <i>user verification is prefered, the operation will not fail if the response does not have the UV flag.</i></label>
+            </div>
+
+            <div>
+                <input type="radio" id="userVerification_discouraged" name="userVerification">
+                <label for="userVerification_discouraged">discouraged <i>user verification should not be employed as to minimize the user interaction during the process.</i></label>
+            </div>
+
 
             <div>&nbsp;</div>
             <div style="font-weight: bold">root certificates</div>
@@ -323,8 +353,15 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                 <input type="checkbox" id="cert_google" name="google" checked>
                 <label for="cert_google">Accept keys signed by google root ca</label>
             </div>
-            <div>&nbsp;</div>
             <div style="font-size: 0.7em">(Nothing checked = accept all)</div>
+            <div>&nbsp;</div>
+            <div>If you select a root ca, direct attestation is required to validate your client with the root.<br>
+                The browser may warn you that he will provide informations about your device.<br>
+                When not checking against any root ca (deselect all certificates),
+                the client may change the assertion from the authenticator (for instance, using an anonymization CA),<br>
+                the browser will not warn about providing informations about your device.
+           </div>
+
         </div>
     </body>
 </html>

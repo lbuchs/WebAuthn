@@ -143,7 +143,15 @@ class WebAuthn {
         $tmp->alg = -7; // ES256
         $args->publicKey->pubKeyCredParams[] = $tmp;
 
-        $args->publicKey->attestation = \count($this->_formats) === 1 && \in_array('none', $this->_formats) ? 'none' : 'direct';
+        // if there are root certificates added, we need direct attestation to validate
+        // against the root certificate. If there are no root-certificates added,
+        // anonymization ca are also accepted, because we can't validate the root anyway.
+        $attestation = 'indirect';
+        if (\is_array($this->_caFiles)) {
+            $attestation = 'direct';
+        }
+
+        $args->publicKey->attestation = \count($this->_formats) === 1 && \in_array('none', $this->_formats) ? 'none' : $attestation;
         $args->publicKey->extensions = new \stdClass();
         $args->publicKey->extensions->exts = true;
         $args->publicKey->timeout = $timeout * 1000; // microseconds

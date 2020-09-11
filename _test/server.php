@@ -41,6 +41,7 @@ try {
     // read get argument and post body
     $fn = $_GET['fn'];
     $requireResidentKey = !!$_GET['requireResidentKey'];
+    $userVerification = filter_input(INPUT_GET, 'userVerification', FILTER_SANITIZE_SPECIAL_CHARS);
     $post = trim(file_get_contents('php://input'));
     if ($post) {
         $post = json_decode($post);
@@ -101,7 +102,7 @@ try {
     // ------------------------------------
 
     if ($fn === 'getCreateArgs') {
-        $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin', 20, $requireResidentKey);
+        $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin', 20, $requireResidentKey, $userVerification);
 
         print(json_encode($createArgs));
 
@@ -137,7 +138,7 @@ try {
             }
         }
 
-        $getArgs = $WebAuthn->getGetArgs($ids);
+        $getArgs = $WebAuthn->getGetArgs($ids, 20, true, true, true, true, $userVerification);
 
         print(json_encode($getArgs));
 
@@ -159,7 +160,7 @@ try {
         // in this example we store it in the php session.
         // Normaly you have to store the data in a database connected
         // with the user name.
-        $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge);
+        $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, $userVerification === 'required');
 
         if (!array_key_exists('registrations', $_SESSION) || !is_array($_SESSION['registrations'])) {
             $_SESSION['registrations'] = array();
@@ -202,7 +203,7 @@ try {
         }
 
         // process the get request. throws WebAuthnException if it fails
-        $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $credentialPublicKey, $challenge);
+        $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $credentialPublicKey, $challenge, null, $userVerification === 'required');
 
         $return = new stdClass();
         $return->success = true;
