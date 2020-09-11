@@ -18,7 +18,7 @@ See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://
 * packed &#x2705;
 * tpm &#x274C;
 
-This library supports only authenticators which are signed with a X.509 certificate (except for `none` format). ECDAA and self attestation is not supported.
+This library supports authenticators which are signed with a X.509 certificate or self attestation. ECDAA is not supported.
 
 ## Workflow
 

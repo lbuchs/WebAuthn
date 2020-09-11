@@ -94,6 +94,7 @@ try {
     if ($_GET['google']) {
         $WebAuthn->addRootCertificates('rootCertificates/globalSign.pem');
         $WebAuthn->addRootCertificates('rootCertificates/googleHardware.pem');
+        $WebAuthn->addRootCertificates('rootCertificates/googleHardware2.pem');
     }
 
 
