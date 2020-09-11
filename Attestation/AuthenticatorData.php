@@ -22,13 +22,22 @@ class AuthenticatorData {
     // Cose encoded keys
     private static $_COSE_KTY = 1;
     private static $_COSE_ALG = 3;
+
+    // Cose EC2 ES256 P-256 curve
     private static $_COSE_CRV = -1;
     private static $_COSE_X = -2;
     private static $_COSE_Y = -3;
 
+    // Cose RSA PS256
+    private static $_COSE_N = -1;
+    private static $_COSE_E = -2;
+
     private static $_EC2_TYPE = 2;
     private static $_EC2_ES256 = -7;
     private static $_EC2_P256 = 1;
+
+    private static $_RSA_TYPE = 3;
+    private static $_RSA_RS256 = -257;
 
     /**
      * Parsing the authenticatorData binary.
@@ -106,14 +115,12 @@ class AuthenticatorData {
      * @return string
      */
     public function getPublicKeyPem() {
-        $der =
-            $this->_der_sequence(
-                $this->_der_sequence(
-                    $this->_der_oid("\x2A\x86\x48\xCE\x3D\x02\x01") . // OID 1.2.840.10045.2.1 ecPublicKey
-                    $this->_der_oid("\x2A\x86\x48\xCE\x3D\x03\x01\x07")  // 1.2.840.10045.3.1.7 prime256v1
-                ) .
-                $this->_der_bitString($this->getPublicKeyU2F())
-            );
+        $der = null;
+        switch ($this->_attestedCredentialData->credentialPublicKey->kty) {
+            case self::$_EC2_TYPE: $der = $this->_getEc2Der(); break;
+            case self::$_RSA_TYPE: $der = $this->_getRsaDer(); break;
+            default: throw new WebAuthnException('invalid key type', WebAuthnException::INVALID_DATA);
+        }
 
         $pem = '-----BEGIN PUBLIC KEY-----' . "\n";
         $pem .= \chunk_split(\base64_encode($der), 64, "\n");
@@ -170,6 +177,39 @@ class AuthenticatorData {
     // -----------------------------------------------
     // PRIVATE
     // -----------------------------------------------
+
+    /**
+     * Returns DER encoded EC2 key
+     * @return string
+     */
+    private function _getEc2Der() {
+        return $this->_der_sequence(
+            $this->_der_sequence(
+                $this->_der_oid("\x2A\x86\x48\xCE\x3D\x02\x01") . // OID 1.2.840.10045.2.1 ecPublicKey
+                $this->_der_oid("\x2A\x86\x48\xCE\x3D\x03\x01\x07")  // 1.2.840.10045.3.1.7 prime256v1
+            ) .
+            $this->_der_bitString($this->getPublicKeyU2F())
+        );
+    }
+
+    /**
+     * Returns DER encoded RSA key
+     * @return string
+     */
+    private function _getRsaDer() {
+        return $this->_der_sequence(
+            $this->_der_sequence(
+                $this->_der_oid("\x2A\x86\x48\x86\xF7\x0D\x01\x01\x01") . // OID 1.2.840.113549.1.1.1 rsaEncryption
+                $this->_der_nullValue()
+            ) .
+            $this->_der_bitString(
+                $this->_der_sequence(
+                    $this->_der_unsignedInteger($this->_attestedCredentialData->credentialPublicKey->n) .
+                    $this->_der_unsignedInteger($this->_attestedCredentialData->credentialPublicKey->e)
+                )
+            )
+        );
+    }
 
     /**
      * reads the flags from flag byte
@@ -239,6 +279,22 @@ class AuthenticatorData {
         $credPKey = new \stdClass();
         $credPKey->kty = $enc[self::$_COSE_KTY];
         $credPKey->alg = $enc[self::$_COSE_ALG];
+
+        switch ($credPKey->alg) {
+            case self::$_EC2_ES256: $this->_readCredentialPublicKeyES256($credPKey, $enc); break;
+            case self::$_RSA_RS256: $this->_readCredentialPublicKeyRS256($credPKey, $enc); break;
+        }
+
+        return $credPKey;
+    }
+
+    /**
+     * extract ES256 informations from cose
+     * @param \stdClass $credPKey
+     * @param \stdClass $enc
+     * @throws WebAuthnException
+     */
+    private function _readCredentialPublicKeyES256(&$credPKey, $enc) {
         $credPKey->crv = $enc[self::$_COSE_CRV];
         $credPKey->x   = $enc[self::$_COSE_X] instanceof ByteBuffer ? $enc[self::$_COSE_X]->getBinaryString() : null;
         $credPKey->y   = $enc[self::$_COSE_Y] instanceof ByteBuffer ? $enc[self::$_COSE_Y]->getBinaryString() : null;
@@ -264,8 +320,36 @@ class AuthenticatorData {
         if (\strlen($credPKey->y) !== 32) {
             throw new WebAuthnException('Invalid Y-coordinate', WebAuthnException::INVALID_PUBLIC_KEY);
         }
+    }
 
-        return $credPKey;
+    /**
+     * extract RS256 informations from COSE
+     * @param \stdClass $credPKey
+     * @param \stdClass $enc
+     * @throws WebAuthnException
+     */
+    private function _readCredentialPublicKeyRS256(&$credPKey, $enc) {
+        $credPKey->n = $enc[self::$_COSE_N] instanceof ByteBuffer ? $enc[self::$_COSE_N]->getBinaryString() : null;
+        $credPKey->e = $enc[self::$_COSE_E] instanceof ByteBuffer ? $enc[self::$_COSE_E]->getBinaryString() : null;
+        unset ($enc);
+
+        // Validation
+        if ($credPKey->kty !== self::$_RSA_TYPE) {
+            throw new WebAuthnException('public key not in RSA format', WebAuthnException::INVALID_PUBLIC_KEY);
+        }
+
+        if ($credPKey->alg !== self::$_RSA_RS256) {
+            throw new WebAuthnException('signature algorithm not ES256', WebAuthnException::INVALID_PUBLIC_KEY);
+        }
+
+        if (\strlen($credPKey->n) !== 256) {
+            throw new WebAuthnException('Invalid RSA modulus', WebAuthnException::INVALID_PUBLIC_KEY);
+        }
+
+        if (\strlen($credPKey->e) !== 3) {
+            throw new WebAuthnException('Invalid RSA public exponent', WebAuthnException::INVALID_PUBLIC_KEY);
+        }
+
     }
 
     /**
@@ -310,5 +394,30 @@ class AuthenticatorData {
 
     private function _der_bitString($bytes) {
         return "\x03" . $this->_der_length(\strlen($bytes) + 1) . "\x00" . $bytes;
+    }
+
+    private function _der_nullValue() {
+        return "\x05\x00";
+    }
+
+    private function _der_unsignedInteger($bytes) {
+        $len = \strlen($bytes);
+
+        // Remove leading zero bytes
+        for ($i = 0; $i < ($len - 1); $i++) {
+            if (\ord($bytes[$i]) !== 0) {
+                break;
+            }
+        }
+        if ($i !== 0) {
+            $bytes = \substr($bytes, $i);
+        }
+
+        // If most significant bit is set, prefix with another zero to prevent it being seen as negative number
+        if ((\ord($bytes[0]) & 0x80) !== 0) {
+            $bytes = "\x00" . $bytes;
+        }
+
+        return "\x02" . $this->_der_length(\strlen($bytes)) . $bytes;
     }
 }

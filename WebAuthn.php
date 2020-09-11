@@ -143,6 +143,12 @@ class WebAuthn {
         $tmp->alg = -7; // ES256
         $args->publicKey->pubKeyCredParams[] = $tmp;
 
+        $args->publicKey->pubKeyCredParams = array();
+        $tmp = new \stdClass();
+        $tmp->type = 'public-key';
+        $tmp->alg = -257; // RS256
+        $args->publicKey->pubKeyCredParams[] = $tmp;
+
         // if there are root certificates added, we need direct attestation to validate
         // against the root certificate. If there are no root-certificates added,
         // anonymization ca are also accepted, because we can't validate the root anyway.
