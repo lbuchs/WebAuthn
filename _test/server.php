@@ -88,6 +88,7 @@ try {
     }
     if ($_GET['hypersecu']) {
         $WebAuthn->addRootCertificates('rootCertificates/hypersecu.pem');
+        $WebAuthn->addRootCertificates('rootCertificates/hypersecu2.pem');
     }
     if ($_GET['google']) {
         $WebAuthn->addRootCertificates('rootCertificates/globalSign.pem');
