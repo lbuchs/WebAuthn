@@ -1,9 +1,9 @@
 <?php
 
 
-namespace WebAuthn\Attestation\Format;
-use WebAuthn\WebAuthnException;
-use WebAuthn\Binary\ByteBuffer;
+namespace lbuchs\WebAuthn\Attestation\Format;
+use lbuchs\WebAuthn\WebAuthnException;
+use lbuchs\WebAuthn\Binary\ByteBuffer;
 
 class U2f extends FormatBase {
     private static $_SHA256_cose_identifier = -7;

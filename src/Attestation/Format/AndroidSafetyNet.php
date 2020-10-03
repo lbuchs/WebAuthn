@@ -1,9 +1,9 @@
 <?php
 
 
-namespace WebAuthn\Attestation\Format;
-use WebAuthn\WebAuthnException;
-use WebAuthn\Binary\ByteBuffer;
+namespace lbuchs\WebAuthn\Attestation\Format;
+use lbuchs\WebAuthn\WebAuthnException;
+use lbuchs\WebAuthn\Binary\ByteBuffer;
 
 class AndroidSafetyNet extends FormatBase {
 
