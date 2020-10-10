@@ -96,12 +96,6 @@ try {
         $WebAuthn->addRootCertificates('rootCertificates/googleHardware.pem');
         $WebAuthn->addRootCertificates('rootCertificates/googleHardware2.pem');
     }
-    if ($_GET['thetis']) {
-        $WebAuthn->addRootCertificates('rootCertificates/thetis.pem');
-    }
-    if ($_GET['feitian']) {
-        $WebAuthn->addRootCertificates('rootCertificates/feitian.pem');
-    }
 
 
     // ------------------------------------
