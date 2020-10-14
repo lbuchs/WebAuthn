@@ -11,6 +11,7 @@ require_once 'Attestation/Format/None.php';
 require_once 'Attestation/Format/AndroidKey.php';
 require_once 'Attestation/Format/AndroidSafetyNet.php';
 require_once 'Attestation/Format/Packed.php';
+require_once 'Attestation/Format/Tpm.php';
 require_once 'Attestation/Format/U2f.php';
 require_once 'CBOR/CborDecoder.php';
 

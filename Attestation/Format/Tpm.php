@@ -5,11 +5,20 @@ namespace WebAuthn\Attestation\Format;
 use WebAuthn\WebAuthnException;
 use WebAuthn\Binary\ByteBuffer;
 
-class Packed extends FormatBase {
+class Tpm extends FormatBase {
     private static $_ES256 = -7; // ES256
     private static $_RS256 = -257; // RS256
 
+    private $_TPM_GENERATED_VALUE = "\xFF\x54\x43\x47";
+    private $_TPM_ST_ATTEST_CERTIFY = "\x80\x17";
+
+    /**
+     * @var ByteBuffer
+     */
+    private $_certInfo;
+
     private $_signature;
+    private $_pubArea;
     private $_x5c;
 
     public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
@@ -18,15 +27,27 @@ class Packed extends FormatBase {
         // check packed data
         $attStmt = $this->_attestationObject['attStmt'];
 
+        if (!\array_key_exists('ver', $attStmt) || $attStmt['ver'] !== '2.0') {
+            throw new WebAuthnException('invalid tpm version: ' . $attStmt['ver'], WebAuthnException::INVALID_DATA);
+        }
+
         if (!\array_key_exists('alg', $attStmt) || ($attStmt['alg'] !== self::$_ES256 && $attStmt['alg'] !== self::$_RS256)) { // SHA256
             throw new WebAuthnException('only ES256/RS256 acceptable but got: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('sig', $attStmt) || !\is_object($attStmt['sig']) || !($attStmt['sig'] instanceof ByteBuffer)) {
-            throw new WebAuthnException('no signature found', WebAuthnException::INVALID_DATA);
+            throw new WebAuthnException('signature not found', WebAuthnException::INVALID_DATA);
+        }
+        if (!\array_key_exists('certInfo', $attStmt) || !\is_object($attStmt['certInfo']) || !($attStmt['certInfo'] instanceof ByteBuffer)) {
+            throw new WebAuthnException('certInfo not found', WebAuthnException::INVALID_DATA);
+        }
+        if (!\array_key_exists('pubArea', $attStmt) || !\is_object($attStmt['pubArea']) || !($attStmt['pubArea'] instanceof ByteBuffer)) {
+            throw new WebAuthnException('pubArea not found', WebAuthnException::INVALID_DATA);
         }
 
         $this->_signature = $attStmt['sig']->getBinaryString();
+        $this->_certInfo = $attStmt['certInfo'];
+        $this->_pubArea = $attStmt['pubArea'];
 
         // certificate for validation
         if (\array_key_exists('x5c', $attStmt) && \is_array($attStmt['x5c']) && \count($attStmt['x5c']) > 0) {
@@ -48,6 +69,9 @@ class Packed extends FormatBase {
                     }
                 }
             }
+
+        } else {
+            throw new WebAuthnException('no x5c certificate found', WebAuthnException::INVALID_DATA);
         }
     }
 
@@ -67,11 +91,7 @@ class Packed extends FormatBase {
      * @param string $clientDataHash
      */
     public function validateAttestation($clientDataHash) {
-        if ($this->_x5c) {
-            return $this->_validateOverX5c($clientDataHash);
-        } else {
-            return $this->_validateSelfAttestation($clientDataHash);
-        }
+        return $this->_validateOverX5c($clientDataHash);
     }
 
     /**
@@ -110,31 +130,44 @@ class Packed extends FormatBase {
             throw new WebAuthnException('invalid public key: ' . \openssl_error_string(), WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
-        // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
-        // using the attestation public key in attestnCert with the algorithm specified in alg.
-        $dataToVerify = $this->_authenticatorData->getBinary();
-        $dataToVerify .= $clientDataHash;
+        // Concatenate authenticatorData and clientDataHash to form attToBeSigned.
+        $attToBeSigned = $this->_authenticatorData->getBinary();
+        $attToBeSigned .= $clientDataHash;
 
+        // Validate that certInfo is valid:
 
-        // check certificate
-        return \openssl_verify($dataToVerify, $this->_signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
+        // Verify that magic is set to TPM_GENERATED_VALUE.
+        if ($this->_certInfo->getBytes(0, 4) !== $this->_TPM_GENERATED_VALUE) {
+            throw new WebAuthnException('tpm magic not TPM_GENERATED_VALUE', WebAuthnException::INVALID_DATA);
+        }
+
+        // Verify that type is set to TPM_ST_ATTEST_CERTIFY.
+        if ($this->_certInfo->getBytes(4, 2) !== $this->_TPM_ST_ATTEST_CERTIFY) {
+            throw new WebAuthnException('tpm type not TPM_ST_ATTEST_CERTIFY', WebAuthnException::INVALID_DATA);
+        }
+
+        $offset = 6;
+        $qualifiedSigner = $this->_tpmReadLengthPrefixed($this->_certInfo, $offset);
+        $extraData = $this->_tpmReadLengthPrefixed($this->_certInfo, $offset);
+
+        // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg".
+        if ($extraData->getBinaryString() !== hash('SHA256', $attToBeSigned, true)) {
+            throw new WebAuthnException('certInfo:extraData not hash of attToBeSigned', WebAuthnException::INVALID_DATA);
+        }
+
+        // Verify the sig is a valid signature over certInfo using the attestation
+        // public key in aikCert with the algorithm specified in alg.
+        return \openssl_verify($this->_certInfo, $this->_signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
     }
 
-    /**
-     * validate if self attestation is in use
-     * @param string $clientDataHash
-     * @return bool
-     */
-    protected function _validateSelfAttestation($clientDataHash) {
-        // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
-        // using the credential public key with alg.
-        $dataToVerify = $this->_authenticatorData->getBinary();
-        $dataToVerify .= $clientDataHash;
 
-        $publicKey = $this->_authenticatorData->getPublicKeyPem();
+    protected function _tpmReadLengthPrefixed(ByteBuffer $buffer, &$offset) {
+        $len = $buffer->getUint16Val($offset);
+        $data = $buffer->getBytes($offset + 2, $len);
+        $offset += (2 + $len);
 
-        // check certificate
-        return \openssl_verify($dataToVerify, $this->_signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
+        return new ByteBuffer($data);
     }
+
 }
 
