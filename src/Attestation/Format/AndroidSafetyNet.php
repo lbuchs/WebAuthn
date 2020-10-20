@@ -4,6 +4,7 @@
 namespace lbuchs\WebAuthn\Attestation\Format;
 use lbuchs\WebAuthn\WebAuthnException;
 use lbuchs\WebAuthn\Binary\ByteBuffer;
+use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 class AndroidSafetyNet extends FormatBase {
 
@@ -12,7 +13,7 @@ class AndroidSafetyNet extends FormatBase {
     private $_x5c;
     private $_payload;
 
-    public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
+    public function __construct($AttestionObject, AuthenticatorData $authenticatorData) {
         parent::__construct($AttestionObject, $authenticatorData);
 
         // check data

@@ -3,6 +3,7 @@
 
 namespace lbuchs\WebAuthn\Attestation\Format;
 use lbuchs\WebAuthn\WebAuthnException;
+use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 
 abstract class FormatBase {
@@ -16,7 +17,7 @@ abstract class FormatBase {
      * @param Array $AttestionObject
      * @param \WebAuthn\Attestation\AuthenticatorData $authenticatorData
      */
-    public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
+    public function __construct($AttestionObject, AuthenticatorData $authenticatorData) {
         $this->_attestationObject = $AttestionObject;
         $this->_authenticatorData = $authenticatorData;
     }

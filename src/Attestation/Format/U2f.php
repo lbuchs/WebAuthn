@@ -4,6 +4,7 @@
 namespace lbuchs\WebAuthn\Attestation\Format;
 use lbuchs\WebAuthn\WebAuthnException;
 use lbuchs\WebAuthn\Binary\ByteBuffer;
+use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 class U2f extends FormatBase {
     private static $_SHA256_cose_identifier = -7;
@@ -11,7 +12,7 @@ class U2f extends FormatBase {
     private $_signature;
     private $_x5c;
 
-    public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
+    public function __construct($AttestionObject, AuthenticatorData $authenticatorData) {
         parent::__construct($AttestionObject, $authenticatorData);
 
         // check u2f data

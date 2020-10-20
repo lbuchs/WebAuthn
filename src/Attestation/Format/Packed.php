@@ -4,6 +4,7 @@
 namespace lbuchs\WebAuthn\Attestation\Format;
 use lbuchs\WebAuthn\WebAuthnException;
 use lbuchs\WebAuthn\Binary\ByteBuffer;
+use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 class Packed extends FormatBase {
     private static $_ES256 = -7; // ES256
@@ -12,7 +13,7 @@ class Packed extends FormatBase {
     private $_signature;
     private $_x5c;
 
-    public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
+    public function __construct($AttestionObject, AuthenticatorData $authenticatorData) {
         parent::__construct($AttestionObject, $authenticatorData);
 
         // check packed data
