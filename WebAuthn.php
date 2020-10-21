@@ -34,12 +34,14 @@ class WebAuthn {
      * Initialize a new WebAuthn server
      * @param string $rpName the relying party name
      * @param string $rpId the relying party ID = the domain name
+     * @param bool $useBase64UrlEncoding true to use base64 url encoding for binary data in json objects. Default is a RFC 1342-Like serialized string.
      * @throws WebAuthnException
      */
-    public function __construct($rpName, $rpId, $allowedFormats=null) {
+    public function __construct($rpName, $rpId, $allowedFormats=null, $useBase64UrlEncoding=false) {
         $this->_rpName = $rpName;
         $this->_rpId = $rpId;
         $this->_rpIdHash = \hash('sha256', $rpId, true);
+        ByteBuffer::$useBase64UrlEncoding = !!$useBase64UrlEncoding;
 
         if (!\function_exists('\openssl_open')) {
             throw new WebAuthnException('OpenSSL-Module not installed');;
@@ -285,7 +287,7 @@ class WebAuthn {
         }
 
         // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
-        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
+        if (!\property_exists($clientData, 'challenge') || ByteBuffer::fromBase64Url($clientData->challenge)->getBinaryString() !== $challenge->getBinaryString()) {
             throw new WebAuthnException('invalid challenge', WebAuthnException::INVALID_CHALLENGE);
         }
 
@@ -387,7 +389,7 @@ class WebAuthn {
 
         // 8. Verify that the value of C.challenge matches the challenge that was sent to the
         //    authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
-        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
+        if (!\property_exists($clientData, 'challenge') || ByteBuffer::fromBase64Url($clientData->challenge)->getBinaryString() !== $challenge->getBinaryString()) {
             throw new WebAuthnException('invalid challenge', WebAuthnException::INVALID_CHALLENGE);
         }
 
@@ -446,15 +448,6 @@ class WebAuthn {
     // -----------------------------------------------
     // PRIVATE
     // -----------------------------------------------
-
-    /**
-     * decode base64 url
-     * @param string $data
-     * @return string
-     */
-    private function _base64url_decode($data) {
-        return \base64_decode(\strtr($data, '-_', '+/') . \str_repeat('=', 3 - (3 + \strlen($data)) % 4));
-    }
 
     /**
      * checks if the origin matchs the RP ID
