@@ -6,20 +6,18 @@ use WebAuthn\WebAuthnException;
 use WebAuthn\Binary\ByteBuffer;
 
 class Tpm extends FormatBase {
-    private static $_ES256 = -7; // ES256
-    private static $_RS256 = -257; // RS256
-
     private $_TPM_GENERATED_VALUE = "\xFF\x54\x43\x47";
     private $_TPM_ST_ATTEST_CERTIFY = "\x80\x17";
+    private $_alg;
+    private $_signature;
+    private $_pubArea;
+    private $_x5c;
 
     /**
      * @var ByteBuffer
      */
     private $_certInfo;
 
-    private $_signature;
-    private $_pubArea;
-    private $_x5c;
 
     public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
         parent::__construct($AttestionObject, $authenticatorData);
@@ -31,20 +29,23 @@ class Tpm extends FormatBase {
             throw new WebAuthnException('invalid tpm version: ' . $attStmt['ver'], WebAuthnException::INVALID_DATA);
         }
 
-        if (!\array_key_exists('alg', $attStmt) || ($attStmt['alg'] !== self::$_ES256 && $attStmt['alg'] !== self::$_RS256)) { // SHA256
-            throw new WebAuthnException('only ES256/RS256 acceptable but got: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
+        if (!\array_key_exists('alg', $attStmt) || $this->_getCoseAlgorithm($attStmt['alg']) === null) {
+            throw new WebAuthnException('unsupported alg: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('sig', $attStmt) || !\is_object($attStmt['sig']) || !($attStmt['sig'] instanceof ByteBuffer)) {
             throw new WebAuthnException('signature not found', WebAuthnException::INVALID_DATA);
         }
+
         if (!\array_key_exists('certInfo', $attStmt) || !\is_object($attStmt['certInfo']) || !($attStmt['certInfo'] instanceof ByteBuffer)) {
             throw new WebAuthnException('certInfo not found', WebAuthnException::INVALID_DATA);
         }
+
         if (!\array_key_exists('pubArea', $attStmt) || !\is_object($attStmt['pubArea']) || !($attStmt['pubArea'] instanceof ByteBuffer)) {
             throw new WebAuthnException('pubArea not found', WebAuthnException::INVALID_DATA);
         }
 
+        $this->_alg = $attStmt['alg'];
         $this->_signature = $attStmt['sig']->getBinaryString();
         $this->_certInfo = $attStmt['certInfo'];
         $this->_pubArea = $attStmt['pubArea'];
@@ -62,11 +63,9 @@ class Tpm extends FormatBase {
             $this->_x5c = $attestnCert->getBinaryString();
 
             // certificate chain
-            if (count($attStmt['x5c']) > 1) {
-                foreach ($attStmt['x5c'] as $chain) {
-                    if ($chain instanceof ByteBuffer) {
-                        $this->_x5c_chain[] = $chain->getBinaryString();
-                    }
+            foreach ($attStmt['x5c'] as $chain) {
+                if ($chain instanceof ByteBuffer) {
+                    $this->_x5c_chain[] = $chain->getBinaryString();
                 }
             }
 
@@ -149,18 +148,25 @@ class Tpm extends FormatBase {
         $offset = 6;
         $qualifiedSigner = $this->_tpmReadLengthPrefixed($this->_certInfo, $offset);
         $extraData = $this->_tpmReadLengthPrefixed($this->_certInfo, $offset);
+        $coseAlg = $this->_getCoseAlgorithm($this->_alg);
 
         // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg".
-        if ($extraData->getBinaryString() !== hash('SHA256', $attToBeSigned, true)) {
+        if ($extraData->getBinaryString() !== \hash($coseAlg->hash, $attToBeSigned, true)) {
             throw new WebAuthnException('certInfo:extraData not hash of attToBeSigned', WebAuthnException::INVALID_DATA);
         }
 
         // Verify the sig is a valid signature over certInfo using the attestation
         // public key in aikCert with the algorithm specified in alg.
-        return \openssl_verify($this->_certInfo, $this->_signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
+        return \openssl_verify($this->_certInfo, $this->_signature, $publicKey, $coseAlg->openssl) === 1;
     }
 
 
+    /**
+     * returns next part of ByteBuffer
+     * @param ByteBuffer $buffer
+     * @param int $offset
+     * @return ByteBuffer
+     */
     protected function _tpmReadLengthPrefixed(ByteBuffer $buffer, &$offset) {
         $len = $buffer->getUint16Val($offset);
         $data = $buffer->getBytes($offset + 2, $len);

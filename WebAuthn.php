@@ -51,12 +51,12 @@ class WebAuthn {
 
         // default value
         if (!is_array($allowedFormats)) {
-            $allowedFormats = array('fido-u2f', 'packed', 'android-key');
+            $allowedFormats = array('android-key', 'fido-u2f', 'packed', 'tpm');
         }
         $this->_formats = $allowedFormats;
 
         // validate formats
-        $invalidFormats = array_diff($this->_formats, array('fido-u2f', 'packed', 'android-key', 'android-safetynet', 'none'));
+        $invalidFormats = \array_diff($this->_formats, array('android-key', 'android-safetynet', 'fido-u2f', 'none', 'packed', 'tpm'));
         if (!$this->_formats || $invalidFormats) {
             throw new WebAuthnException('invalid formats on construct: ' . implode(', ', $invalidFormats));
         }

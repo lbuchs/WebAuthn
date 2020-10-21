@@ -22,7 +22,7 @@ abstract class FormatBase {
     }
 
     /**
-     * 
+     *
      */
     public function __destruct() {
         // delete X.509 chain certificate file after use
@@ -116,6 +116,65 @@ abstract class FormatBase {
             $this->_x5c_tempFile = \sys_get_temp_dir() . '/x5c_chain_' . \base_convert(\rand(), 10, 36) . '.pem';
             if (\file_put_contents($this->_x5c_tempFile, $content) !== false) {
                 return $this->_x5c_tempFile;
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
+     * returns the name and openssl key for provided cose number.
+     * @param int $coseNumber
+     * @return \stdClass|null
+     */
+    protected function _getCoseAlgorithm($coseNumber) {
+        // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+        $coseAlgorithms = array(
+            array(
+                'hash' => 'SHA1',
+                'openssl' => OPENSSL_ALGO_SHA1,
+                'cose' => array(
+                    -65535  // RS1
+                )),
+
+            array(
+                'hash' => 'SHA256',
+                'openssl' => OPENSSL_ALGO_SHA256,
+                'cose' => array(
+                    -257, // RS256
+                    -37,  // PS256
+                    -7,   // ES256
+                    5     // HMAC256
+                )),
+
+            array(
+                'hash' => 'SHA384',
+                'openssl' => OPENSSL_ALGO_SHA384,
+                'cose' => array(
+                    -258, // RS384
+                    -38,  // PS384
+                    -35,  // ES384
+                    6     // HMAC384
+                )),
+
+            array(
+                'hash' => 'SHA512',
+                'openssl' => OPENSSL_ALGO_SHA512,
+                'cose' => array(
+                    -259, // RS512
+                    -39,  // PS512
+                    -36,  // ES512
+                    7     // HMAC512
+                ))
+        );
+
+        foreach ($coseAlgorithms as $coseAlgorithm) {
+            if (\in_array($coseNumber, $coseAlgorithm['cose'], true)) {
+                $return = new \stdClass();
+                $return->hash = $coseAlgorithm['hash'];
+                $return->openssl = $coseAlgorithm['openssl'];
+                return $return;
             }
         }
 

@@ -6,7 +6,6 @@ use WebAuthn\WebAuthnException;
 use WebAuthn\Binary\ByteBuffer;
 
 class AndroidSafetyNet extends FormatBase {
-
     private $_signature;
     private $_signedValue;
     private $_x5c;

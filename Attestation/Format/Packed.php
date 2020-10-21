@@ -6,9 +6,7 @@ use WebAuthn\WebAuthnException;
 use WebAuthn\Binary\ByteBuffer;
 
 class Packed extends FormatBase {
-    private static $_ES256 = -7; // ES256
-    private static $_RS256 = -257; // RS256
-
+    private $_alg;
     private $_signature;
     private $_x5c;
 
@@ -18,14 +16,15 @@ class Packed extends FormatBase {
         // check packed data
         $attStmt = $this->_attestationObject['attStmt'];
 
-        if (!\array_key_exists('alg', $attStmt) || ($attStmt['alg'] !== self::$_ES256 && $attStmt['alg'] !== self::$_RS256)) { // SHA256
-            throw new WebAuthnException('only ES256/RS256 acceptable but got: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
+        if (!\array_key_exists('alg', $attStmt) || $this->_getCoseAlgorithm($attStmt['alg']) === null) {
+            throw new WebAuthnException('unsupported alg: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('sig', $attStmt) || !\is_object($attStmt['sig']) || !($attStmt['sig'] instanceof ByteBuffer)) {
             throw new WebAuthnException('no signature found', WebAuthnException::INVALID_DATA);
         }
 
+        $this->_alg = $attStmt['alg'];
         $this->_signature = $attStmt['sig']->getBinaryString();
 
         // certificate for validation
@@ -41,11 +40,9 @@ class Packed extends FormatBase {
             $this->_x5c = $attestnCert->getBinaryString();
 
             // certificate chain
-            if (count($attStmt['x5c']) > 1) {
-                foreach ($attStmt['x5c'] as $chain) {
-                    if ($chain instanceof ByteBuffer) {
-                        $this->_x5c_chain[] = $chain->getBinaryString();
-                    }
+            foreach ($attStmt['x5c'] as $chain) {
+                if ($chain instanceof ByteBuffer) {
+                    $this->_x5c_chain[] = $chain->getBinaryString();
                 }
             }
         }
@@ -115,9 +112,10 @@ class Packed extends FormatBase {
         $dataToVerify = $this->_authenticatorData->getBinary();
         $dataToVerify .= $clientDataHash;
 
+        $coseAlgorithm = $this->_getCoseAlgorithm($this->_alg);
 
         // check certificate
-        return \openssl_verify($dataToVerify, $this->_signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
+        return \openssl_verify($dataToVerify, $this->_signature, $publicKey, $coseAlgorithm->openssl) === 1;
     }
 
     /**

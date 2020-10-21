@@ -55,6 +55,9 @@ try {
     if ($_GET['fmt_android-safetynet']) {
         $formats[] = 'android-safetynet';
     }
+    if ($_GET['fmt_apple']) {
+        $formats[] = 'apple';
+    }
     if ($_GET['fmt_fido-u2f']) {
         $formats[] = 'fido-u2f';
     }

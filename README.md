@@ -13,12 +13,13 @@ See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://
 ### Supported attestation statement formats
 * android-key &#x2705;
 * android-safetynet &#x2705;
+* apple &#x274C;
 * fido-u2f &#x2705;
 * none &#x2705;
 * packed &#x2705;
-* tpm &#x274C;
+* tpm &#x2705;
 
-This library supports authenticators which are signed with a X.509 certificate or self attestation. ECDAA is not supported.
+This library supports authenticators which are signed with a X.509 certificate or which are self attested. ECDAA is not supported.
 
 ## Workflow
 

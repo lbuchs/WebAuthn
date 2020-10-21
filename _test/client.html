@@ -210,6 +210,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
             url += '&fmt_android-key=' + (document.getElementById('fmt_android-key').checked ? '1' : '0');
             url += '&fmt_android-safetynet=' + (document.getElementById('fmt_android-safetynet').checked ? '1' : '0');
+            url += '&fmt_apple=' + (document.getElementById('fmt_apple').checked ? '1' : '0');
             url += '&fmt_fido-u2f=' + (document.getElementById('fmt_fido-u2f').checked ? '1' : '0');
             url += '&fmt_none=' + (document.getElementById('fmt_none').checked ? '1' : '0');
             url += '&fmt_packed=' + (document.getElementById('fmt_packed').checked ? '1' : '0');
@@ -290,8 +291,13 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             </div>
 
             <div>
-                <input type="checkbox" id="fmt_android-safetynet" name="fmt_android-safetynet">
+                <input type="checkbox" id="fmt_android-safetynet" name="fmt_android-safetynet" checked>
                 <label for="fmt_android-safetynet">android-safetynet</label>
+            </div>
+
+            <div>
+                <input type="checkbox" id="fmt_apple" name="fmt_apple" disabled>
+                <label for="fmt_apple">apple</label>
             </div>
 
             <div>
@@ -310,7 +316,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             </div>
 
             <div>
-                <input type="checkbox" id="fmt_tpm" name="fmt_tpm" disabled>
+                <input type="checkbox" id="fmt_tpm" name="fmt_tpm" checked>
                 <label for="fmt_tpm">tpm</label>
             </div>
 
