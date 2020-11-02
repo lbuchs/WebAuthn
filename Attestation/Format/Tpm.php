@@ -157,7 +157,7 @@ class Tpm extends FormatBase {
 
         // Verify the sig is a valid signature over certInfo using the attestation
         // public key in aikCert with the algorithm specified in alg.
-        return \openssl_verify($this->_certInfo, $this->_signature, $publicKey, $coseAlg->openssl) === 1;
+        return \openssl_verify($this->_certInfo->getBinaryString(), $this->_signature, $publicKey, $coseAlg->openssl) === 1;
     }
 
 

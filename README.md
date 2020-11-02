@@ -5,7 +5,7 @@
 # WebAuthn
 *A simple PHP WebAuthn (FIDO2) server library*
 
-Goal of this project is to provide a small, lightweight, understandable library to protect logins with security keys like Yubico or Solo or fingerprint on Android.
+Goal of this project is to provide a small, lightweight, understandable library to protect logins with security keys like Yubico or Solo, fingerprint on Android or Windows Hello.
 
 ## Manual
 See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
