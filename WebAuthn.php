@@ -10,6 +10,7 @@ require_once 'Attestation/Format/FormatBase.php';
 require_once 'Attestation/Format/None.php';
 require_once 'Attestation/Format/AndroidKey.php';
 require_once 'Attestation/Format/AndroidSafetyNet.php';
+require_once 'Attestation/Format/Apple.php';
 require_once 'Attestation/Format/Packed.php';
 require_once 'Attestation/Format/Tpm.php';
 require_once 'Attestation/Format/U2f.php';
@@ -42,6 +43,7 @@ class WebAuthn {
         $this->_rpId = $rpId;
         $this->_rpIdHash = \hash('sha256', $rpId, true);
         ByteBuffer::$useBase64UrlEncoding = !!$useBase64UrlEncoding;
+        $supportedFormats = array('android-key', 'android-safetynet', 'apple', 'fido-u2f', 'none', 'packed', 'tpm');
 
         if (!\function_exists('\openssl_open')) {
             throw new WebAuthnException('OpenSSL-Module not installed');;
@@ -51,14 +53,14 @@ class WebAuthn {
             throw new WebAuthnException('SHA256 not supported by this openssl installation.');
         }
 
-        // default value
+        // default: all format
         if (!is_array($allowedFormats)) {
-            $allowedFormats = array('android-key', 'fido-u2f', 'packed', 'tpm');
+            $allowedFormats = $supportedFormats;
         }
         $this->_formats = $allowedFormats;
 
         // validate formats
-        $invalidFormats = \array_diff($this->_formats, array('android-key', 'android-safetynet', 'fido-u2f', 'none', 'packed', 'tpm'));
+        $invalidFormats = \array_diff($this->_formats, $supportedFormats);
         if (!$this->_formats || $invalidFormats) {
             throw new WebAuthnException('invalid formats on construct: ' . implode(', ', $invalidFormats));
         }
@@ -106,10 +108,13 @@ class WebAuthn {
      *                                             true = required
      *                                             false = preferred
      *                                             string 'required' 'preferred' 'discouraged'
+     * @param bool|null $crossPlatformAttachment   true for cross-platform devices (eg. fido usb),
+     *                                             false for platform devices (eg. windows hello, android safetynet),
+     *                                             null for both
      * @param array $excludeCredentialIds a array of ids, which are already registered, to prevent re-registration
      * @return \stdClass
      */
-    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false, $requireUserVerification=false, $excludeCredentialIds=array()) {
+    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false, $requireUserVerification=false, $crossPlatformAttachment=null, $excludeCredentialIds=array()) {
 
         // validate User Verification Requirement
         if (\is_bool($requireUserVerification)) {
@@ -132,6 +137,9 @@ class WebAuthn {
         $args->publicKey->authenticatorSelection->userVerification = $requireUserVerification;
         if ($requireResidentKey) {
             $args->publicKey->authenticatorSelection->requireResidentKey = true;
+        }
+        if (is_bool($crossPlatformAttachment)) {
+            $args->publicKey->authenticatorSelection->authenticatorAttachment = $crossPlatformAttachment ? 'cross-platform' : 'platform';
         }
 
         // user

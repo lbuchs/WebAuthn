@@ -210,6 +210,13 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
             url += '&requireResidentKey=' + (document.getElementById('requireResidentKey').checked ? '1' : '0');
 
+
+            //<!--$allowUsb=true, $allowNfc=true, $allowBle=true, $allowInternal-->
+            url += '&type_usb=' + (document.getElementById('type_usb').checked ? '1' : '0');
+            url += '&type_nfc=' + (document.getElementById('type_nfc').checked ? '1' : '0');
+            url += '&type_ble=' + (document.getElementById('type_ble').checked ? '1' : '0');
+            url += '&type_int=' + (document.getElementById('type_int').checked ? '1' : '0');
+
             url += '&fmt_android-key=' + (document.getElementById('fmt_android-key').checked ? '1' : '0');
             url += '&fmt_android-safetynet=' + (document.getElementById('fmt_android-safetynet').checked ? '1' : '0');
             url += '&fmt_apple=' + (document.getElementById('fmt_apple').checked ? '1' : '0');
@@ -298,7 +305,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             </div>
 
             <div>
-                <input type="checkbox" id="fmt_apple" name="fmt_apple" disabled>
+                <input type="checkbox" id="fmt_apple" name="fmt_apple" checked>
                 <label for="fmt_apple">apple</label>
             </div>
 
@@ -308,7 +315,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             </div>
 
             <div>
-                <input type="checkbox" id="fmt_none" name="fmt_none">
+                <input type="checkbox" id="fmt_none" name="fmt_none" checked>
                 <label for="fmt_none">none</label>
             </div>
 
@@ -326,17 +333,36 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             <div style="font-weight: bold">user verification</div>
             <div>
                 <input type="radio" id="userVerification_required" name="userVerification">
-                <label for="userVerification_required">required <i>User verification is required (e.g. by pin), the operation will fail if the response does not have the UV flag.</i></label>
+                <label for="userVerification_required">required <i style="font-size: 0.8em;">User verification is required (e.g. by pin), the operation will fail if the response does not have the UV flag.</i></label>
             </div>
 
             <div>
-                <input type="radio" id="userVerification_preferred" name="userVerification" checked>
-                <label for="userVerification_preferred">preferred <i>user verification is prefered, the operation will not fail if the response does not have the UV flag.</i></label>
+                <input type="radio" id="userVerification_preferred" name="userVerification">
+                <label for="userVerification_preferred">preferred <i style="font-size: 0.8em;">user verification is prefered, the operation will not fail if the response does not have the UV flag.</i></label>
             </div>
 
             <div>
-                <input type="radio" id="userVerification_discouraged" name="userVerification">
-                <label for="userVerification_discouraged">discouraged <i>user verification should not be employed as to minimize the user interaction during the process.</i></label>
+                <input type="radio" id="userVerification_discouraged" name="userVerification" checked>
+                <label for="userVerification_discouraged">discouraged <i style="font-size: 0.8em;">user verification should not be employed as to minimize the user interaction during the process.</i></label>
+            </div>
+
+            <div>&nbsp;</div>
+            <div style="font-weight: bold">type of authenticator</div>
+            <div>
+                <input type="checkbox" id="type_usb" name="type_usb" checked>
+                <label for="type_usb">USB</label>
+            </div>
+            <div>
+                <input type="checkbox" id="type_nfc" name="type_nfc" checked>
+                <label for="type_nfc">NFC</label>
+            </div>
+            <div>
+                <input type="checkbox" id="type_ble" name="type_ble" checked>
+                <label for="type_ble">BLE</label>
+            </div>
+            <div>
+                <input type="checkbox" id="type_int" name="type_int" checked>
+                <label for="type_int">internal <i style="font-size: 0.8em;">Windows Hello, Android SafetyNet, Apple, ...</i></label>
             </div>
 
 
@@ -378,7 +404,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                 The browser may warn you that he will provide informations about your device.<br>
                 When not checking against any root ca (deselect all certificates),
                 the client may change the assertion from the authenticator (for instance, using an anonymization CA),<br>
-                the browser will not warn about providing informations about your device.
+                the browser may not warn about providing informations about your device.
            </div>
 
         </div>
