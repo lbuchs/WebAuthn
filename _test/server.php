@@ -87,17 +87,21 @@ try {
     if ($_GET['solo']) {
         $WebAuthn->addRootCertificates('rootCertificates/solo.pem');
     }
+    if ($_GET['apple']) {
+        $WebAuthn->addRootCertificates('rootCertificates/apple.pem');
+    }
     if ($_GET['yubico']) {
         $WebAuthn->addRootCertificates('rootCertificates/yubico.pem');
     }
     if ($_GET['hypersecu']) {
         $WebAuthn->addRootCertificates('rootCertificates/hypersecu.pem');
-        $WebAuthn->addRootCertificates('rootCertificates/hypersecu2.pem');
     }
     if ($_GET['google']) {
         $WebAuthn->addRootCertificates('rootCertificates/globalSign.pem');
         $WebAuthn->addRootCertificates('rootCertificates/googleHardware.pem');
-        $WebAuthn->addRootCertificates('rootCertificates/googleHardware2.pem');
+    }
+    if ($_GET['microsoft']) {
+        $WebAuthn->addRootCertificates('rootCertificates/microsoftTpmCollection.pem');
     }
 
 
