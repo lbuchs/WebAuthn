@@ -1,5 +1,5 @@
 [![Licensed under the MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/lbuchs/WebAuthn/blob/master/LICENSE)
-[![Requires PHP 5.6](https://img.shields.io/badge/PHP-%3E%3D%205.6-green.svg)](https://php.net)
+[![Requires PHP 7.1.0](https://img.shields.io/badge/PHP-7.1.0-green.svg)](https://php.net)
 [![Last Commit](https://img.shields.io/github/last-commit/lbuchs/WebAuthn.svg)](https://github.com/lbuchs/WebAuthn/commits/master)
 
 # WebAuthn
@@ -77,7 +77,7 @@ to notify the authenticator that he should save the registration in its memory.
 When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds` (the authenticator will look up the ids in its own memory).
 
 ## Requirements
-* PHP >= 5.6 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
+* PHP >= 7.1.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
 * Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Opera 54+, Edge 18+)
 
 ## Infos about WebAuthn

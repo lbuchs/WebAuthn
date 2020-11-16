@@ -98,25 +98,33 @@ class Apple extends FormatBase {
             throw new WebAuthnException('invalid x5c certificate: ' . \openssl_error_string(), WebAuthnException::INVALID_DATA);
         }
 
-        // DEBUG
-        file_put_contents('apple_' . time() . '.pem', $this->getCertificatePem());
-        file_put_contents('apple_' . time() . '_authP.pem', $this->_authenticatorData->getPublicKeyPem());
-        file_put_contents('apple_' . time() . '_nonce.pem', $nonce);
-
-
         $keyData = openssl_pkey_get_details(openssl_pkey_get_public($credCert));
         $key = is_array($keyData) && array_key_exists('key', $keyData) ? $keyData['key'] : null;
 
 
         // Verify that nonce equals the value of the extension with OID ( 1.2.840.113635.100.8.2 ) in credCert.
         $parsedCredCert = openssl_x509_parse($credCert);
-        if ($parsedCredCert['extensions']['1.2.840.113635.100.8.2'] !== $nonce) {
+        $nonceExtension = isset($parsedCredCert['extensions']['1.2.840.113635.100.8.2']) ? $parsedCredCert['extensions']['1.2.840.113635.100.8.2'] : '';
+
+        // nonce padded by ASN.1 string: 30 24 A1 22 04 20
+        // 30     — type tag indicating sequence
+        // 24     — 36 byte following
+        //   A1   — Enumerated [1]
+        //   22   — 34 byte following
+        //     04 — type tag indicating octet string
+        //     20 — 32 byte following
+
+        $asn1Padding = "\x30\x24\xA1\x22\x04\x20";
+        if (substr($nonceExtension, 0, strlen($asn1Padding)) === $asn1Padding) {
+            $nonceExtension = substr($nonceExtension, strlen($asn1Padding));
+        }
+
+        if ($nonceExtension !== $nonce) {
             throw new WebAuthnException('nonce doesn\'t equal the value of the extension with OID 1.2.840.113635.100.8.2', WebAuthnException::INVALID_DATA);
         }
 
         // Verify that the credential public key equals the Subject Public Key of credCert.
-        $auth = openssl_x509_read($this->_authenticatorData->getPublicKeyPem());
-        $authKeyData = openssl_pkey_get_details(openssl_pkey_get_public($auth));
+        $authKeyData = openssl_pkey_get_details(openssl_pkey_get_public($this->_authenticatorData->getPublicKeyPem()));
         $authKey = is_array($authKeyData) && array_key_exists('key', $authKeyData) ? $authKeyData['key'] : null;
 
         if ($key === null || $key !== $authKey) {
