@@ -7,7 +7,6 @@ use lbuchs\WebAuthn\Binary\ByteBuffer;
 use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 class AndroidSafetyNet extends FormatBase {
-
     private $_signature;
     private $_signedValue;
     private $_x5c;

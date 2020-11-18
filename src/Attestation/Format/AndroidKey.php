@@ -6,8 +6,7 @@ use lbuchs\WebAuthn\Binary\ByteBuffer;
 use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 class AndroidKey extends FormatBase {
-    private static $_SHA256_cose_identifier = -7;
-
+    private $_alg;
     private $_signature;
     private $_x5c;
 
@@ -17,8 +16,8 @@ class AndroidKey extends FormatBase {
         // check u2f data
         $attStmt = $this->_attestationObject['attStmt'];
 
-        if (\array_key_exists('alg', $attStmt) && $attStmt['alg'] !== self::$_SHA256_cose_identifier) { // SHA256
-            throw new WebAuthnException('only SHA256 acceptable but got: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
+        if (!\array_key_exists('alg', $attStmt) || $this->_getCoseAlgorithm($attStmt['alg']) === null) {
+            throw new WebAuthnException('unsupported alg: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('sig', $attStmt) || !\is_object($attStmt['sig']) || !($attStmt['sig'] instanceof ByteBuffer)) {
@@ -33,6 +32,7 @@ class AndroidKey extends FormatBase {
             throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
         }
 
+        $this->_alg = $attStmt['alg'];
         $this->_signature = $attStmt['sig']->getBinaryString();
         $this->_x5c = $attStmt['x5c'][0]->getBinaryString();
 
@@ -63,14 +63,15 @@ class AndroidKey extends FormatBase {
             throw new WebAuthnException('invalid public key: ' . \openssl_error_string(), WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
-            // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
-            // using the attestation public key in attestnCert with the algorithm specified in alg.
-            $dataToVerify = $this->_authenticatorData->getBinary();
-            $dataToVerify .= $clientDataHash;
+        // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
+        // using the attestation public key in attestnCert with the algorithm specified in alg.
+        $dataToVerify = $this->_authenticatorData->getBinary();
+        $dataToVerify .= $clientDataHash;
 
+        $coseAlgorithm = $this->_getCoseAlgorithm($this->_alg);
 
         // check certificate
-        return \openssl_verify($dataToVerify, $this->_signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
+        return \openssl_verify($dataToVerify, $this->_signature, $publicKey, $coseAlgorithm->openssl) === 1;
     }
 
     /**

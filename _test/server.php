@@ -39,7 +39,7 @@ try {
     session_start();
 
     // read get argument and post body
-    $fn = $_GET['fn'];
+    $fn = filter_input(INPUT_GET, 'fn');
     $requireResidentKey = !!$_GET['requireResidentKey'];
     $userVerification = filter_input(INPUT_GET, 'userVerification', FILTER_SANITIZE_SPECIAL_CHARS);
     $post = trim(file_get_contents('php://input'));
@@ -54,6 +54,9 @@ try {
     }
     if ($_GET['fmt_android-safetynet']) {
         $formats[] = 'android-safetynet';
+    }
+    if ($_GET['fmt_apple']) {
+        $formats[] = 'apple';
     }
     if ($_GET['fmt_fido-u2f']) {
         $formats[] = 'fido-u2f';
@@ -76,6 +79,24 @@ try {
         }
     }
 
+    // types selected on front end
+    $typeUsb = !!$_GET['type_usb'];
+    $typeNfc = !!$_GET['type_nfc'];
+    $typeBle = !!$_GET['type_ble'];
+    $typeInt = !!$_GET['type_int'];
+
+    // cross-platform: true, if type internal is not allowed
+    //                 false, if only internal is allowed
+    //                 null, if internal and cross-platform is allowed
+    $crossPlatformAttachment = null;
+    if (($typeUsb || $typeNfc || $typeBle) && !$typeInt) {
+        $crossPlatformAttachment = true;
+
+    } else if (!$typeUsb && !$typeNfc && !$typeBle && $typeInt) {
+        $crossPlatformAttachment = false;
+    }
+
+
     // new Instance of the server library.
     // make sure that $rpId is the domain name.
     $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', $rpId, $formats);
@@ -84,17 +105,21 @@ try {
     if ($_GET['solo']) {
         $WebAuthn->addRootCertificates('rootCertificates/solo.pem');
     }
+    if ($_GET['apple']) {
+        $WebAuthn->addRootCertificates('rootCertificates/apple.pem');
+    }
     if ($_GET['yubico']) {
         $WebAuthn->addRootCertificates('rootCertificates/yubico.pem');
     }
     if ($_GET['hypersecu']) {
         $WebAuthn->addRootCertificates('rootCertificates/hypersecu.pem');
-        $WebAuthn->addRootCertificates('rootCertificates/hypersecu2.pem');
     }
     if ($_GET['google']) {
         $WebAuthn->addRootCertificates('rootCertificates/globalSign.pem');
         $WebAuthn->addRootCertificates('rootCertificates/googleHardware.pem');
-        $WebAuthn->addRootCertificates('rootCertificates/googleHardware2.pem');
+    }
+    if ($_GET['microsoft']) {
+        $WebAuthn->addRootCertificates('rootCertificates/microsoftTpmCollection.pem');
     }
 
 
@@ -103,7 +128,7 @@ try {
     // ------------------------------------
 
     if ($fn === 'getCreateArgs') {
-        $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin', 20, $requireResidentKey, $userVerification);
+        $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin', 20, $requireResidentKey, $userVerification, $crossPlatformAttachment);
 
         print(json_encode($createArgs));
 
@@ -139,7 +164,7 @@ try {
             }
         }
 
-        $getArgs = $WebAuthn->getGetArgs($ids, 20, true, true, true, true, $userVerification);
+        $getArgs = $WebAuthn->getGetArgs($ids, 20, $typeUsb, $typeNfc, $typeBle, $typeInt, $userVerification);
 
         print(json_encode($getArgs));
 

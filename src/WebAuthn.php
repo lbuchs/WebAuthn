@@ -10,7 +10,9 @@ require_once 'Attestation/Format/FormatBase.php';
 require_once 'Attestation/Format/None.php';
 require_once 'Attestation/Format/AndroidKey.php';
 require_once 'Attestation/Format/AndroidSafetyNet.php';
+require_once 'Attestation/Format/Apple.php';
 require_once 'Attestation/Format/Packed.php';
+require_once 'Attestation/Format/Tpm.php';
 require_once 'Attestation/Format/U2f.php';
 require_once 'CBOR/CborDecoder.php';
 
@@ -33,12 +35,15 @@ class WebAuthn {
      * Initialize a new WebAuthn server
      * @param string $rpName the relying party name
      * @param string $rpId the relying party ID = the domain name
+     * @param bool $useBase64UrlEncoding true to use base64 url encoding for binary data in json objects. Default is a RFC 1342-Like serialized string.
      * @throws WebAuthnException
      */
-    public function __construct($rpName, $rpId, $allowedFormats=null) {
+    public function __construct($rpName, $rpId, $allowedFormats=null, $useBase64UrlEncoding=false) {
         $this->_rpName = $rpName;
         $this->_rpId = $rpId;
         $this->_rpIdHash = \hash('sha256', $rpId, true);
+        ByteBuffer::$useBase64UrlEncoding = !!$useBase64UrlEncoding;
+        $supportedFormats = array('android-key', 'android-safetynet', 'apple', 'fido-u2f', 'none', 'packed', 'tpm');
 
         if (!\function_exists('\openssl_open')) {
             throw new WebAuthnException('OpenSSL-Module not installed');;
@@ -48,14 +53,14 @@ class WebAuthn {
             throw new WebAuthnException('SHA256 not supported by this openssl installation.');
         }
 
-        // default value
+        // default: all format
         if (!is_array($allowedFormats)) {
-            $allowedFormats = array('fido-u2f', 'packed', 'android-key');
+            $allowedFormats = $supportedFormats;
         }
         $this->_formats = $allowedFormats;
 
         // validate formats
-        $invalidFormats = array_diff($this->_formats, array('fido-u2f', 'packed', 'android-key', 'android-safetynet', 'none'));
+        $invalidFormats = \array_diff($this->_formats, $supportedFormats);
         if (!$this->_formats || $invalidFormats) {
             throw new WebAuthnException('invalid formats on construct: ' . implode(', ', $invalidFormats));
         }
@@ -103,10 +108,13 @@ class WebAuthn {
      *                                             true = required
      *                                             false = preferred
      *                                             string 'required' 'preferred' 'discouraged'
+     * @param bool|null $crossPlatformAttachment   true for cross-platform devices (eg. fido usb),
+     *                                             false for platform devices (eg. windows hello, android safetynet),
+     *                                             null for both
      * @param array $excludeCredentialIds a array of ids, which are already registered, to prevent re-registration
      * @return \stdClass
      */
-    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false, $requireUserVerification=false, $excludeCredentialIds=array()) {
+    public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false, $requireUserVerification=false, $crossPlatformAttachment=null, $excludeCredentialIds=array()) {
 
         // validate User Verification Requirement
         if (\is_bool($requireUserVerification)) {
@@ -129,6 +137,9 @@ class WebAuthn {
         $args->publicKey->authenticatorSelection->userVerification = $requireUserVerification;
         if ($requireResidentKey) {
             $args->publicKey->authenticatorSelection->requireResidentKey = true;
+        }
+        if (is_bool($crossPlatformAttachment)) {
+            $args->publicKey->authenticatorSelection->authenticatorAttachment = $crossPlatformAttachment ? 'cross-platform' : 'platform';
         }
 
         // user
@@ -284,7 +295,7 @@ class WebAuthn {
         }
 
         // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
-        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
+        if (!\property_exists($clientData, 'challenge') || ByteBuffer::fromBase64Url($clientData->challenge)->getBinaryString() !== $challenge->getBinaryString()) {
             throw new WebAuthnException('invalid challenge', WebAuthnException::INVALID_CHALLENGE);
         }
 
@@ -386,7 +397,7 @@ class WebAuthn {
 
         // 8. Verify that the value of C.challenge matches the challenge that was sent to the
         //    authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
-        if (!\property_exists($clientData, 'challenge') || $this->_base64url_decode($clientData->challenge) !== $challenge->getBinaryString()) {
+        if (!\property_exists($clientData, 'challenge') || ByteBuffer::fromBase64Url($clientData->challenge)->getBinaryString() !== $challenge->getBinaryString()) {
             throw new WebAuthnException('invalid challenge', WebAuthnException::INVALID_CHALLENGE);
         }
 
@@ -445,15 +456,6 @@ class WebAuthn {
     // -----------------------------------------------
     // PRIVATE
     // -----------------------------------------------
-
-    /**
-     * decode base64 url
-     * @param string $data
-     * @return string
-     */
-    private function _base64url_decode($data) {
-        return \base64_decode(\strtr($data, '-_', '+/') . \str_repeat('=', 3 - (3 + \strlen($data)) % 4));
-    }
 
     /**
      * checks if the origin matchs the RP ID

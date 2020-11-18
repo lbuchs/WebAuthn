@@ -1,11 +1,11 @@
 [![Licensed under the MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/lbuchs/WebAuthn/blob/master/LICENSE)
-[![Requires PHP 5.6](https://img.shields.io/badge/PHP-%3E%3D%205.6-green.svg)](https://php.net)
+[![Requires PHP 7.1.0](https://img.shields.io/badge/PHP-7.1.0-green.svg)](https://php.net)
 [![Last Commit](https://img.shields.io/github/last-commit/lbuchs/WebAuthn.svg)](https://github.com/lbuchs/WebAuthn/commits/master)
 
 # WebAuthn
 *A simple PHP WebAuthn (FIDO2) server library*
 
-Goal of this project is to provide a small, lightweight, understandable library to protect logins with security keys like Yubico or Solo or fingerprint on Android.
+Goal of this project is to provide a small, lightweight, understandable library to protect logins with security keys like Yubico or Solo, fingerprint on Android or Windows Hello.
 
 ## Manual
 See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
@@ -13,12 +13,13 @@ See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://
 ### Supported attestation statement formats
 * android-key &#x2705;
 * android-safetynet &#x2705;
+* apple &#x2705;
 * fido-u2f &#x2705;
 * none &#x2705;
 * packed &#x2705;
-* tpm &#x274C;
+* tpm &#x2705;
 
-This library supports authenticators which are signed with a X.509 certificate or self attestation. ECDAA is not supported.
+This library supports authenticators which are signed with a X.509 certificate or which are self attested. ECDAA is not supported.
 
 ## Workflow
 
@@ -76,7 +77,7 @@ to notify the authenticator that he should save the registration in its memory.
 When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds` (the authenticator will look up the ids in its own memory).
 
 ## Requirements
-* PHP >= 5.6 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
+* PHP >= 7.1.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
 * Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Opera 54+, Edge 18+)
 
 ## Infos about WebAuthn

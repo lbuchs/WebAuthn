@@ -12,18 +12,23 @@ use lbuchs\WebAuthn\WebAuthnException;
  */
 class ByteBuffer implements \JsonSerializable, \Serializable {
     /**
+     * @var bool
+     */
+    public static $useBase64UrlEncoding = false;
+
+    /**
      * @var string
      */
-    private $data;
+    private $_data;
 
     /**
      * @var int
      */
-    private $length;
+    private $_length;
 
     public function __construct($binaryData) {
-        $this->data = $binaryData;
-        $this->length = \strlen($binaryData);
+        $this->_data = $binaryData;
+        $this->_length = \strlen($binaryData);
     }
 
 
@@ -31,6 +36,24 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     // PUBLIC STATIC
     // -----------------------
 
+    /**
+     * create a ByteBuffer from a base64 url encoded string
+     * @param string $base64url
+     * @return \WebAuthn\Binary\ByteBuffer
+     */
+    public static function fromBase64Url($base64url) {
+        $bin = self::_base64url_decode($base64url);
+        if ($bin === false) {
+            throw new WebAuthnException('ByteBuffer: Invalid base64 url string', WebAuthnException::BYTEBUFFER);
+        }
+        return new ByteBuffer($bin);
+    }
+
+    /**
+     * create a ByteBuffer from a base64 url encoded string
+     * @param string $hex
+     * @return \WebAuthn\Binary\ByteBuffer
+     */
     public static function fromHex($hex) {
         $bin = \hex2bin($hex);
         if ($bin === false) {
@@ -39,13 +62,18 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
         return new ByteBuffer($bin);
     }
 
+    /**
+     * create a random ByteBuffer
+     * @param string $length
+     * @return \WebAuthn\Binary\ByteBuffer
+     */
     public static function randomBuffer($length) {
         if (\function_exists('random_bytes')) { // >PHP 7.0
             return new ByteBuffer(\random_bytes($length));
 
         } else if (\function_exists('openssl_random_pseudo_bytes')) {
             return new ByteBuffer(\openssl_random_pseudo_bytes($length));
-            
+
         } else {
             throw new WebAuthnException('ByteBuffer: cannot generate random bytes', WebAuthnException::BYTEBUFFER);
         }
@@ -56,36 +84,36 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     // -----------------------
 
     public function getBytes($offset, $length) {
-        if ($offset < 0 || $length < 0 || ($offset + $length > $this->length)) {
+        if ($offset < 0 || $length < 0 || ($offset + $length > $this->_length)) {
             throw new WebAuthnException('ByteBuffer: Invalid offset or length', WebAuthnException::BYTEBUFFER);
         }
-        return \substr($this->data, $offset, $length);
+        return \substr($this->_data, $offset, $length);
     }
 
     public function getByteVal($offset) {
-        if ($offset < 0 || $offset >= $this->length) {
+        if ($offset < 0 || $offset >= $this->_length) {
             throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
-        return \ord(\substr($this->data, $offset, 1));
+        return \ord(\substr($this->_data, $offset, 1));
     }
 
     public function getLength() {
-        return $this->length;
+        return $this->_length;
     }
 
     public function getUint16Val($offset) {
-        if ($offset < 0 || ($offset + 2) > $this->length) {
+        if ($offset < 0 || ($offset + 2) > $this->_length) {
             throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
-        return unpack('n', $this->data, $offset)[1];
+        return unpack('n', $this->_data, $offset)[1];
     }
 
     public function getUint32Val($offset) {
-        if ($offset < 0 || ($offset + 4) > $this->length) {
+        if ($offset < 0 || ($offset + 4) > $this->_length) {
             throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
-        $val = unpack('N', $this->data, $offset)[1];
-        
+        $val = unpack('N', $this->_data, $offset)[1];
+
         // Signed integer overflow causes signed negative numbers
         if ($val < 0) {
             throw new WebAuthnException('ByteBuffer: Value out of integer range.', WebAuthnException::BYTEBUFFER);
@@ -97,10 +125,10 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
         if (PHP_INT_SIZE < 8) {
             throw new WebAuthnException('ByteBuffer: 64-bit values not supported by this system', WebAuthnException::BYTEBUFFER);
         }
-        if ($offset < 0 || ($offset + 8) > $this->length) {
+        if ($offset < 0 || ($offset + 8) > $this->_length) {
             throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
-        $val = unpack('J', $this->data, $offset)[1];
+        $val = unpack('J', $this->_data, $offset)[1];
 
         // Signed integer overflow causes signed negative numbers
         if ($val < 0) {
@@ -129,24 +157,24 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     }
 
     public function getFloatVal($offset) {
-        if ($offset < 0 || ($offset + 4) > $this->length) {
+        if ($offset < 0 || ($offset + 4) > $this->_length) {
             throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
-        return unpack('G', $this->data, $offset)[1];
+        return unpack('G', $this->_data, $offset)[1];
     }
 
     public function getDoubleVal($offset) {
-        if ($offset < 0 || ($offset + 8) > $this->length) {
+        if ($offset < 0 || ($offset + 8) > $this->_length) {
             throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
-        return unpack('E', $this->data, $offset)[1];
+        return unpack('E', $this->_data, $offset)[1];
     }
 
     /**
      * @return string
      */
     public function getBinaryString() {
-        return $this->data;
+        return $this->_data;
     }
 
     /**
@@ -154,46 +182,74 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * @return bool
      */
     public function equals($buffer) {
-        return is_string($this->data) && $this->data === $buffer->data;
+        return is_string($this->_data) && $this->_data === $buffer->data;
     }
 
     /**
      * @return string
      */
     public function getHex() {
-        return \bin2hex($this->data);
+        return \bin2hex($this->_data);
     }
 
     /**
      * @return bool
      */
     public function isEmpty() {
-        return $this->length === 0;
+        return $this->_length === 0;
     }
 
 
     /**
      * jsonSerialize interface
+     * return binary data in RFC 1342-Like serialized string
      * @return \stdClass
      */
     public function jsonSerialize() {
-        return '?BINARY?B?' . \base64_encode($this->data) . '?=';
+        if (ByteBuffer::$useBase64UrlEncoding) {
+            return self::_base64url_encode($this->_data);
+
+        } else {
+            return '=?BINARY?B?' . \base64_encode($this->_data) . '?=';
+        }
     }
 
     /**
-     * Das Serializable-Interface
+     * Serializable-Interface
      * @return string
      */
     public function serialize() {
-        return \serialize($this->data);
+        return \serialize($this->_data);
     }
 
     /**
-     * Das Serializable-Interface
+     * Serializable-Interface
      * @param string $serialized
      */
     public function unserialize($serialized) {
-        $this->data = \unserialize($serialized);
-        $this->length = \strlen($this->data);
+        $this->_data = \unserialize($serialized);
+        $this->_length = \strlen($this->_data);
+    }
+
+    // -----------------------
+    // PROTECTED STATIC
+    // -----------------------
+
+    /**
+     * base64 url decoding
+     * @param string $data
+     * @return string
+     */
+    protected static function _base64url_decode($data) {
+        return \base64_decode(\strtr($data, '-_', '+/') . \str_repeat('=', 3 - (3 + \strlen($data)) % 4));
+    }
+
+    /**
+     * base64 url encoding
+     * @param string $data
+     * @return string
+     */
+    protected static function _base64url_encode($data) {
+        return \rtrim(\strtr(\base64_encode($data), '+/', '-_'), '=');
     }
 }
