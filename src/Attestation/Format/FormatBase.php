@@ -15,7 +15,7 @@ abstract class FormatBase {
     /**
      *
      * @param Array $AttestionObject
-     * @param \WebAuthn\Attestation\AuthenticatorData $authenticatorData
+     * @param AuthenticatorData $authenticatorData
      */
     public function __construct($AttestionObject, AuthenticatorData $authenticatorData) {
         $this->_attestationObject = $AttestionObject;

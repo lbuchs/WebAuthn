@@ -34,7 +34,7 @@
  * ------------------------------------------------------------
  */
 
-require_once '../WebAuthn.php';
+require_once '../src/WebAuthn.php';
 try {
     session_start();
 
@@ -99,7 +99,7 @@ try {
 
     // new Instance of the server library.
     // make sure that $rpId is the domain name.
-    $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', $rpId, $formats);
+    $WebAuthn = new lbuchs\WebAuthn\WebAuthn('WebAuthn Library', $rpId, $formats);
 
     // add root certificates to validate new registrations
     if ($_GET['solo']) {

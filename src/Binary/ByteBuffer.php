@@ -39,7 +39,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     /**
      * create a ByteBuffer from a base64 url encoded string
      * @param string $base64url
-     * @return \WebAuthn\Binary\ByteBuffer
+     * @return ByteBuffer
      */
     public static function fromBase64Url($base64url) {
         $bin = self::_base64url_decode($base64url);
@@ -52,7 +52,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     /**
      * create a ByteBuffer from a base64 url encoded string
      * @param string $hex
-     * @return \WebAuthn\Binary\ByteBuffer
+     * @return ByteBuffer
      */
     public static function fromHex($hex) {
         $bin = \hex2bin($hex);
@@ -65,7 +65,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     /**
      * create a random ByteBuffer
      * @param string $length
-     * @return \WebAuthn\Binary\ByteBuffer
+     * @return ByteBuffer
      */
     public static function randomBuffer($length) {
         if (\function_exists('random_bytes')) { // >PHP 7.0

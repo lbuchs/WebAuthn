@@ -2,9 +2,9 @@
 
 
 namespace lbuchs\WebAuthn\Attestation\Format;
+use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 use lbuchs\WebAuthn\WebAuthnException;
 use lbuchs\WebAuthn\Binary\ByteBuffer;
-use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 class AndroidSafetyNet extends FormatBase {
     private $_signature;

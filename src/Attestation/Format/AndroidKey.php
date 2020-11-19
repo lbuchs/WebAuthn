@@ -1,9 +1,9 @@
 <?php
 
 namespace lbuchs\WebAuthn\Attestation\Format;
+use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 use lbuchs\WebAuthn\WebAuthnException;
 use lbuchs\WebAuthn\Binary\ByteBuffer;
-use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 class AndroidKey extends FormatBase {
     private $_alg;

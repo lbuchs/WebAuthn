@@ -2,8 +2,8 @@
 
 
 namespace lbuchs\WebAuthn\Attestation\Format;
-use lbuchs\WebAuthn\WebAuthnException;
 use lbuchs\WebAuthn\Attestation\AuthenticatorData;
+use lbuchs\WebAuthn\WebAuthnException;
 
 class None extends FormatBase {
 
