@@ -1,13 +1,14 @@
 <?php
 
 
-namespace WebAuthn\Attestation\Format;
-use WebAuthn\WebAuthnException;
+namespace lbuchs\WebAuthn\Attestation\Format;
+use lbuchs\WebAuthn\WebAuthnException;
+use lbuchs\WebAuthn\Attestation\AuthenticatorData;
 
 class None extends FormatBase {
 
 
-    public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
+    public function __construct($AttestionObject, AuthenticatorData $authenticatorData) {
         parent::__construct($AttestionObject, $authenticatorData);
     }
 

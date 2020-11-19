@@ -1,7 +1,7 @@
 <?php
 
-namespace WebAuthn;
-use WebAuthn\Binary\ByteBuffer;
+namespace lbuchs\WebAuthn;
+use lbuchs\WebAuthn\Binary\ByteBuffer;
 require_once 'WebAuthnException.php';
 require_once 'Binary/ByteBuffer.php';
 require_once 'Attestation/AttestationObject.php';

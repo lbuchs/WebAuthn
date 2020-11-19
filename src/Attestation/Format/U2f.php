@@ -1,15 +1,17 @@
 <?php
 
-namespace WebAuthn\Attestation\Format;
-use WebAuthn\WebAuthnException;
-use WebAuthn\Binary\ByteBuffer;
 
-class AndroidKey extends FormatBase {
+namespace lbuchs\WebAuthn\Attestation\Format;
+use lbuchs\WebAuthn\WebAuthnException;
+use lbuchs\WebAuthn\Binary\ByteBuffer;
+use lbuchs\WebAuthn\Attestation\AuthenticatorData;
+
+class U2f extends FormatBase {
     private $_alg;
     private $_signature;
     private $_x5c;
 
-    public function __construct($AttestionObject, \WebAuthn\Attestation\AuthenticatorData $authenticatorData) {
+    public function __construct($AttestionObject, AuthenticatorData $authenticatorData) {
         parent::__construct($AttestionObject, $authenticatorData);
 
         // check u2f data
@@ -23,7 +25,7 @@ class AndroidKey extends FormatBase {
             throw new WebAuthnException('no signature found', WebAuthnException::INVALID_DATA);
         }
 
-        if (!\array_key_exists('x5c', $attStmt) || !\is_array($attStmt['x5c']) || \count($attStmt['x5c']) < 1) {
+        if (!\array_key_exists('x5c', $attStmt) || !\is_array($attStmt['x5c']) || \count($attStmt['x5c']) !== 1) {
             throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
         }
 
@@ -34,13 +36,6 @@ class AndroidKey extends FormatBase {
         $this->_alg = $attStmt['alg'];
         $this->_signature = $attStmt['sig']->getBinaryString();
         $this->_x5c = $attStmt['x5c'][0]->getBinaryString();
-
-        if (count($attStmt['x5c']) > 1) {
-            for ($i=1; $i<count($attStmt['x5c']); $i++) {
-                $this->_x5c_chain[] = $attStmt['x5c'][$i]->getBinaryString();
-            }
-            unset ($i);
-        }
     }
 
 
@@ -49,7 +44,10 @@ class AndroidKey extends FormatBase {
      * @return string
      */
     public function getCertificatePem() {
-        return $this->_createCertificatePem($this->_x5c);
+        $pem = '-----BEGIN CERTIFICATE-----' . "\n";
+        $pem .= \chunk_split(\base64_encode($this->_x5c), 64, "\n");
+        $pem .= '-----END CERTIFICATE-----' . "\n";
+        return $pem;
     }
 
     /**
@@ -62,10 +60,12 @@ class AndroidKey extends FormatBase {
             throw new WebAuthnException('invalid public key: ' . \openssl_error_string(), WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
-        // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
-        // using the attestation public key in attestnCert with the algorithm specified in alg.
-        $dataToVerify = $this->_authenticatorData->getBinary();
+        // Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
+        $dataToVerify = "\x00";
+        $dataToVerify .= $this->_authenticatorData->getRpIdHash();
         $dataToVerify .= $clientDataHash;
+        $dataToVerify .= $this->_authenticatorData->getCredentialId();
+        $dataToVerify .= $this->_authenticatorData->getPublicKeyU2F();
 
         $coseAlgorithm = $this->_getCoseAlgorithm($this->_alg);
 
@@ -92,4 +92,3 @@ class AndroidKey extends FormatBase {
         return $v;
     }
 }
-
