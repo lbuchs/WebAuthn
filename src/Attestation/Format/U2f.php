@@ -7,7 +7,7 @@ use lbuchs\WebAuthn\WebAuthnException;
 use lbuchs\WebAuthn\Binary\ByteBuffer;
 
 class U2f extends FormatBase {
-    private $_alg;
+    private $_alg = -7;
     private $_signature;
     private $_x5c;
 
@@ -17,8 +17,8 @@ class U2f extends FormatBase {
         // check u2f data
         $attStmt = $this->_attestationObject['attStmt'];
 
-        if (!\array_key_exists('alg', $attStmt) || $this->_getCoseAlgorithm($attStmt['alg']) === null) {
-            throw new WebAuthnException('unsupported alg: ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
+        if (\array_key_exists('alg', $attStmt) && $attStmt['alg'] !== $this->_alg) {
+            throw new WebAuthnException('u2f only accepts algorithm -7 ("ES256"), but got ' . $attStmt['alg'], WebAuthnException::INVALID_DATA);
         }
 
         if (!\array_key_exists('sig', $attStmt) || !\is_object($attStmt['sig']) || !($attStmt['sig'] instanceof ByteBuffer)) {
@@ -33,7 +33,6 @@ class U2f extends FormatBase {
             throw new WebAuthnException('invalid x5c certificate', WebAuthnException::INVALID_DATA);
         }
 
-        $this->_alg = $attStmt['alg'];
         $this->_signature = $attStmt['sig']->getBinaryString();
         $this->_x5c = $attStmt['x5c'][0]->getBinaryString();
     }
