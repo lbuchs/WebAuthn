@@ -273,10 +273,11 @@ class WebAuthn {
      * @param string|ByteBuffer $challenge binary used challange
      * @param bool $requireUserVerification true, if the device must verify user (e.g. by biometric data or pin)
      * @param bool $requireUserPresent false, if the device must NOT check user presence (e.g. by pressing a button)
+     * @param bool $failIfRootMismatch false, if there should be no error thrown if root certificate doesn't match
      * @return \stdClass
      * @throws WebAuthnException
      */
-    public function processCreate($clientDataJSON, $attestationObject, $challenge, $requireUserVerification=false, $requireUserPresent=true) {
+    public function processCreate($clientDataJSON, $attestationObject, $challenge, $requireUserVerification=false, $requireUserPresent=true, $failIfRootMismatch=true) {
         $clientDataHash = \hash('sha256', $clientDataJSON, true);
         $clientData = \json_decode($clientDataJSON);
         $challenge = $challenge instanceof ByteBuffer ? $challenge : new ByteBuffer($challenge);
@@ -318,18 +319,21 @@ class WebAuthn {
         }
 
         // 15. If validation is successful, obtain a list of acceptable trust anchors
-        if (is_array($this->_caFiles) && !$attestationObject->validateRootCertificate($this->_caFiles)) {
+        $rootValid = is_array($this->_caFiles) ? $attestationObject->validateRootCertificate($this->_caFiles) : null;
+        if ($failIfRootMismatch && is_array($this->_caFiles) && !$rootValid) {
             throw new WebAuthnException('invalid root certificate', WebAuthnException::CERTIFICATE_NOT_TRUSTED);
         }
 
         // 10. Verify that the User Present bit of the flags in authData is set.
-        if ($requireUserPresent && !$attestationObject->getAuthenticatorData()->getUserPresent()) {
+        $userPresent = $attestationObject->getAuthenticatorData()->getUserPresent();
+        if ($requireUserPresent && !$userPresent) {
             throw new WebAuthnException('user not present during authentication', WebAuthnException::USER_PRESENT);
         }
 
         // 11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.
-        if ($requireUserVerification && !$attestationObject->getAuthenticatorData()->getUserVerified()) {
-            throw new WebAuthnException('user not verificated during authentication', WebAuthnException::USER_VERIFICATED);
+        $userVerified = $attestationObject->getAuthenticatorData()->getUserVerified();
+        if ($requireUserVerification && !$userVerified) {
+            throw new WebAuthnException('user not verified during authentication', WebAuthnException::USER_VERIFICATED);
         }
 
         $signCount = $attestationObject->getAuthenticatorData()->getSignCount();
@@ -340,6 +344,7 @@ class WebAuthn {
         // prepare data to store for future logins
         $data = new \stdClass();
         $data->rpId = $this->_rpId;
+        $data->attestationFormat = $attestationObject->getAttestationFormatName();
         $data->credentialId = $attestationObject->getAuthenticatorData()->getCredentialId();
         $data->credentialPublicKey = $attestationObject->getAuthenticatorData()->getPublicKeyPem();
         $data->certificateChain = $attestationObject->getCertificateChain();
@@ -348,6 +353,9 @@ class WebAuthn {
         $data->certificateSubject = $attestationObject->getCertificateSubject();
         $data->signatureCounter = $this->_signatureCounter;
         $data->AAGUID = $attestationObject->getAuthenticatorData()->getAAGUID();
+        $data->rootValid = $rootValid;
+        $data->userPresent = $userPresent;
+        $data->userVerified = $userVerified;
         return $data;
     }
 

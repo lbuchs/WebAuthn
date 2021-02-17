@@ -231,6 +231,14 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
         $this->_length = \strlen($this->_data);
     }
 
+    /**
+     * object to string
+     * @return string
+     */
+    public function __toString() {
+        return $this->getHex();
+    }
+
     // -----------------------
     // PROTECTED STATIC
     // -----------------------

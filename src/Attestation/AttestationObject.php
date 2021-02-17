@@ -12,6 +12,7 @@ use lbuchs\WebAuthn\Binary\ByteBuffer;
 class AttestationObject {
     private $_authenticatorData;
     private $_attestationFormat;
+    private $_attestationFormatName;
 
     public function __construct($binary , $allowedFormats) {
         $enc = CborDecoder::decode($binary);
@@ -29,13 +30,15 @@ class AttestationObject {
         }
 
         $this->_authenticatorData = new AuthenticatorData($enc['authData']->getBinaryString());
+        $this->_attestationFormatName = $enc['fmt'];
 
         // Format ok?
-        if (!in_array($enc['fmt'], $allowedFormats)) {
-            throw new WebAuthnException('invalid atttestation format: ' . $enc['fmt'], WebAuthnException::INVALID_DATA);
+        if (!in_array($this->_attestationFormatName, $allowedFormats)) {
+            throw new WebAuthnException('invalid atttestation format: ' . $this->_attestationFormatName, WebAuthnException::INVALID_DATA);
         }
 
-        switch ($enc['fmt']) {
+
+        switch ($this->_attestationFormatName) {
             case 'android-key': $this->_attestationFormat = new Format\AndroidKey($enc, $this->_authenticatorData); break;
             case 'android-safetynet': $this->_attestationFormat = new Format\AndroidSafetyNet($enc, $this->_authenticatorData); break;
             case 'apple': $this->_attestationFormat = new Format\Apple($enc, $this->_authenticatorData); break;
@@ -45,6 +48,14 @@ class AttestationObject {
             case 'tpm': $this->_attestationFormat = new Format\Tpm($enc, $this->_authenticatorData); break;
             default: throw new WebAuthnException('invalid attestation format: ' . $enc['fmt'], WebAuthnException::INVALID_DATA);
         }
+    }
+
+    /**
+     * returns the attestation format name
+     * @return string
+     */
+    public function getAttestationFormatName() {
+        return $this->_attestationFormatName;
     }
 
     /**

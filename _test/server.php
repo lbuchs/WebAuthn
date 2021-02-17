@@ -47,81 +47,83 @@ try {
         $post = json_decode($post);
     }
 
-    // Formats
-    $formats = array();
-    if ($_GET['fmt_android-key']) {
-        $formats[] = 'android-key';
-    }
-    if ($_GET['fmt_android-safetynet']) {
-        $formats[] = 'android-safetynet';
-    }
-    if ($_GET['fmt_apple']) {
-        $formats[] = 'apple';
-    }
-    if ($_GET['fmt_fido-u2f']) {
-        $formats[] = 'fido-u2f';
-    }
-    if ($_GET['fmt_none']) {
-        $formats[] = 'none';
-    }
-    if ($_GET['fmt_packed']) {
-        $formats[] = 'packed';
-    }
-    if ($_GET['fmt_tpm']) {
-        $formats[] = 'tpm';
-    }
+    if ($fn !== 'getStoredDataHtml') {
 
-    $rpId = 'localhost';
-    if ($_GET['rpId']) {
-        $rpId = filter_input(INPUT_GET, 'rpId', FILTER_VALIDATE_DOMAIN);
-        if ($rpId === false) {
-            throw new Exception('invalid relying party ID');
+        // Formats
+        $formats = array();
+        if ($_GET['fmt_android-key']) {
+            $formats[] = 'android-key';
+        }
+        if ($_GET['fmt_android-safetynet']) {
+            $formats[] = 'android-safetynet';
+        }
+        if ($_GET['fmt_apple']) {
+            $formats[] = 'apple';
+        }
+        if ($_GET['fmt_fido-u2f']) {
+            $formats[] = 'fido-u2f';
+        }
+        if ($_GET['fmt_none']) {
+            $formats[] = 'none';
+        }
+        if ($_GET['fmt_packed']) {
+            $formats[] = 'packed';
+        }
+        if ($_GET['fmt_tpm']) {
+            $formats[] = 'tpm';
+        }
+
+        $rpId = 'localhost';
+        if ($_GET['rpId']) {
+            $rpId = filter_input(INPUT_GET, 'rpId', FILTER_VALIDATE_DOMAIN);
+            if ($rpId === false) {
+                throw new Exception('invalid relying party ID');
+            }
+        }
+
+        // types selected on front end
+        $typeUsb = !!$_GET['type_usb'];
+        $typeNfc = !!$_GET['type_nfc'];
+        $typeBle = !!$_GET['type_ble'];
+        $typeInt = !!$_GET['type_int'];
+
+        // cross-platform: true, if type internal is not allowed
+        //                 false, if only internal is allowed
+        //                 null, if internal and cross-platform is allowed
+        $crossPlatformAttachment = null;
+        if (($typeUsb || $typeNfc || $typeBle) && !$typeInt) {
+            $crossPlatformAttachment = true;
+
+        } else if (!$typeUsb && !$typeNfc && !$typeBle && $typeInt) {
+            $crossPlatformAttachment = false;
+        }
+
+
+        // new Instance of the server library.
+        // make sure that $rpId is the domain name.
+        $WebAuthn = new lbuchs\WebAuthn\WebAuthn('WebAuthn Library', $rpId, $formats);
+
+        // add root certificates to validate new registrations
+        if ($_GET['solo']) {
+            $WebAuthn->addRootCertificates('rootCertificates/solo.pem');
+        }
+        if ($_GET['apple']) {
+            $WebAuthn->addRootCertificates('rootCertificates/apple.pem');
+        }
+        if ($_GET['yubico']) {
+            $WebAuthn->addRootCertificates('rootCertificates/yubico.pem');
+        }
+        if ($_GET['hypersecu']) {
+            $WebAuthn->addRootCertificates('rootCertificates/hypersecu.pem');
+        }
+        if ($_GET['google']) {
+            $WebAuthn->addRootCertificates('rootCertificates/globalSign.pem');
+            $WebAuthn->addRootCertificates('rootCertificates/googleHardware.pem');
+        }
+        if ($_GET['microsoft']) {
+            $WebAuthn->addRootCertificates('rootCertificates/microsoftTpmCollection.pem');
         }
     }
-
-    // types selected on front end
-    $typeUsb = !!$_GET['type_usb'];
-    $typeNfc = !!$_GET['type_nfc'];
-    $typeBle = !!$_GET['type_ble'];
-    $typeInt = !!$_GET['type_int'];
-
-    // cross-platform: true, if type internal is not allowed
-    //                 false, if only internal is allowed
-    //                 null, if internal and cross-platform is allowed
-    $crossPlatformAttachment = null;
-    if (($typeUsb || $typeNfc || $typeBle) && !$typeInt) {
-        $crossPlatformAttachment = true;
-
-    } else if (!$typeUsb && !$typeNfc && !$typeBle && $typeInt) {
-        $crossPlatformAttachment = false;
-    }
-
-
-    // new Instance of the server library.
-    // make sure that $rpId is the domain name.
-    $WebAuthn = new lbuchs\WebAuthn\WebAuthn('WebAuthn Library', $rpId, $formats);
-
-    // add root certificates to validate new registrations
-    if ($_GET['solo']) {
-        $WebAuthn->addRootCertificates('rootCertificates/solo.pem');
-    }
-    if ($_GET['apple']) {
-        $WebAuthn->addRootCertificates('rootCertificates/apple.pem');
-    }
-    if ($_GET['yubico']) {
-        $WebAuthn->addRootCertificates('rootCertificates/yubico.pem');
-    }
-    if ($_GET['hypersecu']) {
-        $WebAuthn->addRootCertificates('rootCertificates/hypersecu.pem');
-    }
-    if ($_GET['google']) {
-        $WebAuthn->addRootCertificates('rootCertificates/globalSign.pem');
-        $WebAuthn->addRootCertificates('rootCertificates/googleHardware.pem');
-    }
-    if ($_GET['microsoft']) {
-        $WebAuthn->addRootCertificates('rootCertificates/microsoftTpmCollection.pem');
-    }
-
 
     // ------------------------------------
     // request for create arguments
@@ -186,16 +188,21 @@ try {
         // in this example we store it in the php session.
         // Normaly you have to store the data in a database connected
         // with the user name.
-        $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, $userVerification === 'required');
+        $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, $userVerification === 'required', true, false);
 
         if (!array_key_exists('registrations', $_SESSION) || !is_array($_SESSION['registrations'])) {
             $_SESSION['registrations'] = array();
         }
         $_SESSION['registrations'][] = $data;
 
+        $msg = 'registration success.';
+        if ($data->rootValid === false) {
+            $msg = 'registration ok, but certificate does not match any of the selected root ca.';
+        }
+
         $return = new stdClass();
         $return->success = true;
-        $return->msg = 'Registration Success. I have ' . count($_SESSION['registrations']) . ' registrations in session.';
+        $return->msg = $msg;
         print(json_encode($return));
 
 
@@ -247,6 +254,36 @@ try {
         $return->success = true;
         $return->msg = 'all registrations deleted';
         print(json_encode($return));
+
+
+    } else if ($fn === 'getStoredDataHtml') {
+        $html = '<!DOCTYPE html>' . "\n";
+        $html .= '<html><head><style>tr:nth-child(even){background-color: #f2f2f2;}</style></head>';
+        $html .= '<body style="font-family:sans-serif">';
+        if (isset($_SESSION['registrations']) && is_array($_SESSION['registrations'])) {
+            $html .= '<p>There are ' . count($_SESSION['registrations']) . ' registrations in this session:</p>';
+            foreach ($_SESSION['registrations'] as $reg) {
+                $html .= '<table style="border:1px solid black;margin:10px 0;">';
+                foreach ($reg as $key => $value) {
+
+                    if (is_bool($value)) {
+                        $value = $value ? 'yes' : 'no';
+                    }
+                    if (is_null($value)) {
+                        $value = 'null';
+                    }
+                    if (is_object($value)) {
+                        $value = '[binary data as hex] ' . chunk_split(strval($value));
+                    }
+                    $html .= '<tr><td>' . htmlspecialchars($key) . '</td><td style="font-family:monospace;">' . nl2br(htmlspecialchars($value)) . '</td>';
+                }
+                $html .= '</table>';
+            }
+        } else {
+            $html .= '<p>There are no registrations in this session.</p>';
+        }
+        $html .= '</body></html>';
+        print $html;
     }
 
 } catch (Throwable $ex) {
