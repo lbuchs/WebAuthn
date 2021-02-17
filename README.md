@@ -49,6 +49,23 @@ This library supports authenticators which are signed with a X.509 certificate o
                                                  |
           alert ok or fail      <----------------'
 
+## Attestation
+What's attestation? Normally, you just need to verify that a login comes from the same device like the device used on registration. For this usecase, you don't need any attestation. If you need more security, maybe when you know that for your company login everyone has a solokey, you can verify with direct attestation, that this device is really a solokey. Companys could even buy own authenticators signed with a company-own root certificate, then you can verify that a authenticator is one of your company.
+
+### no attestation
+just verify that the device is the same device used on registration.
+You can use 'none' attestation with this library if you only check 'none' as format.
+* this is propably what you want to use if you want simple 2FA login protection like github, facebook, google, etc.
+
+### indirect attestation
+the browser may replace the AAGUID and attestation statement with a more privacy-friendly and/or more easily verifiable version of the same data (for example, by employing an anonymization CA). You can not validate against any root ca, if the browser uses a anonymization certificate. 
+this library sets attestation to indirect, if you select multiple formats but don't provide any root ca.
+* hybrid soultion, clients may be discouraged by browser warnings but then you know what device they're using (statistics rulez!)
+
+### direct attestation
+the browser proviedes data about the identificator device, the device can be identified uniquely. User could be tracked over multiple sites, because of that the browser may show a warning message about providing this data when register.
+this library sets attestation to direct, if you select multiple formats but and provide root ca's.
+* this is probably what you want if you know what devices your clients are using and make sure that only this devices are used.
 
 ## Resident Credential
 A Client-side-resident Public Key Credential Source, or Resident Credential for short,
