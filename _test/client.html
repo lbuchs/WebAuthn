@@ -156,6 +156,22 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             });
         }
 
+
+        function queryFidoMetaDataService() {
+            window.fetch('server.php?fn=queryFidoMetaDataService' + getGetParams(), {method:'GET',cache:'no-cache'}).then(function(response) {
+                return response.json();
+
+            }).then(function(json) {
+               if (json.success) {
+                   window.alert(json.msg);
+               } else {
+                   throw new Error(json.msg);
+               }
+            }).catch(function(err) {
+                window.alert(err.message || 'unknown error occured');
+            });
+        }
+
         /**
          * convert RFC 1342-like base64 strings to array buffer
          * @param {mixed} obj
@@ -213,6 +229,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             url += '&hypersecu=' + (document.getElementById('cert_hypersecu').checked ? '1' : '0');
             url += '&google=' + (document.getElementById('cert_google').checked ? '1' : '0');
             url += '&microsoft=' + (document.getElementById('cert_microsoft').checked ? '1' : '0');
+            url += '&mds=' + (document.getElementById('cert_mds').checked ? '1' : '0');
 
             url += '&requireResidentKey=' + (document.getElementById('requireResidentKey').checked ? '1' : '0');
 
@@ -417,35 +434,47 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                     <div style="font-weight: bold">root certificates</div>
 
                     <div>
-                        <input type="checkbox" id="cert_apple" name="apple" checked>
+                        <input type="checkbox" id="cert_mds" name="mds" checked>
+                        <label for="cert_microsoft">Accept keys signed by <a href="https://fidoalliance.org/metadata/" target="_blank">FIDO Alliance Metadata Service</a></label>
+                    </div>
+
+                    <div>
+                        <input type="checkbox" id="cert_apple" name="apple">
                         <label for="cert_apple">Accept keys signed by apple root ca</label>
                     </div>
 
                     <div>
-                        <input type="checkbox" id="cert_yubico" name="yubico" checked>
+                        <input type="checkbox" id="cert_yubico" name="yubico">
                         <label for="cert_yubico">Accept keys signed by yubico root ca</label>
                     </div>
 
                     <div>
-                        <input type="checkbox" id="cert_solo" name="solo" checked>
+                        <input type="checkbox" id="cert_solo" name="solo">
                         <label for="cert_solo">Accept keys signed by solokeys root ca</label>
                     </div>
 
                     <div>
-                        <input type="checkbox" id="cert_hypersecu" name="hypersecu" checked>
+                        <input type="checkbox" id="cert_hypersecu" name="hypersecu">
                         <label for="cert_hypersecu">Accept keys signed by hypersecu root ca</label>
                     </div>
 
                     <div>
-                        <input type="checkbox" id="cert_google" name="google" checked>
+                        <input type="checkbox" id="cert_google" name="google">
                         <label for="cert_google">Accept keys signed by google root ca</label>
                     </div>
 
                     <div>
-                        <input type="checkbox" id="cert_microsoft" name="microsoft" checked>
+                        <input type="checkbox" id="cert_microsoft" name="microsoft">
                         <label for="cert_microsoft">Accept keys signed by Microsofts collection of trusted TPM root ca</label>
                     </div>
+
                     <div style="font-size: 0.7em">(Nothing checked = accept all)</div>
+                    <div>&nbsp;</div>
+
+                    <div>
+                        <button type="button" onclick="queryFidoMetaDataService()">&#128472; update root certificates from FIDO Alliance Metadata Service (MDS)</button>
+                    </div>
+
                     <div>&nbsp;</div>
                     <div>If you select a root ca, direct attestation is required to validate your client with the root.<br>
                         The browser may warn you that he will provide informations about your device.<br>

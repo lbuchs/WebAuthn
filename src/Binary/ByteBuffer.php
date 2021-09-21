@@ -97,6 +97,14 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
         return \ord(\substr($this->_data, $offset, 1));
     }
 
+    public function getJson($jsonFlags=0) {
+        $data = \json_decode($this->getBinaryString(), null, 512, $jsonFlags);
+        if (\json_last_error() !== JSON_ERROR_NONE) {
+            throw new WebAuthnException(\json_last_error_msg(), WebAuthnException::BYTEBUFFER);
+        }
+        return $data;
+    }
+
     public function getLength() {
         return $this->_length;
     }

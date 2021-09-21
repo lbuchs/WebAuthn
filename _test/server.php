@@ -123,6 +123,10 @@ try {
         if ($_GET['microsoft']) {
             $WebAuthn->addRootCertificates('rootCertificates/microsoftTpmCollection.pem');
         }
+        if ($_GET['mds']) {
+            $WebAuthn->addRootCertificates('rootCertificates/mds');
+        }
+
     }
 
     // ------------------------------------
@@ -255,6 +259,9 @@ try {
         $return->msg = 'all registrations deleted';
         print(json_encode($return));
 
+    // ------------------------------------
+    // display stored data as HTML
+    // ------------------------------------
 
     } else if ($fn === 'getStoredDataHtml') {
         $html = '<!DOCTYPE html>' . "\n";
@@ -284,6 +291,33 @@ try {
         }
         $html .= '</body></html>';
         print $html;
+
+    // ------------------------------------
+    // get root certs from FIDO Alliance Metadata Service
+    // ------------------------------------
+
+    } else if ($fn === 'queryFidoMetaDataService') {
+
+        $mdsFolder = 'rootCertificates/mds';
+        $success = false;
+        $msg = null;
+
+        // fetch only 1x / 24h
+        $lastFetch = \is_file('rootCertificates/lastMdsFetch.txt') ? \strtotime(\file_get_contents('rootCertificates/lastMdsFetch.txt')) : 0;
+        if ($lastFetch + (3600*48) < \time()) {
+            $cnt = $WebAuthn->queryFidoMetaDataService($mdsFolder);
+            $success = true;
+            \file_put_contents('rootCertificates/lastMdsFetch.txt', date('r'));
+            $msg = 'successfully queried FIDO Alliance Metadata Service - ' . $cnt . ' certificates downloaded.';
+
+        } else {
+            $msg = 'Fail: last fetch was at ' . date('r', $lastFetch) . ' - fetch only 1x every 48h';
+        }
+
+        $return = new stdClass();
+        $return->success = $success;
+        $return->msg = $msg;
+        print(json_encode($return));
     }
 
 } catch (Throwable $ex) {

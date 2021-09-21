@@ -58,13 +58,13 @@ You can use 'none' attestation with this library if you only check 'none' as for
 * this is propably what you want to use if you want simple 2FA login protection like github, facebook, google, etc.
 
 ### indirect attestation
-the browser may replace the AAGUID and attestation statement with a more privacy-friendly and/or more easily verifiable version of the same data (for example, by employing an anonymization CA). You can not validate against any root ca, if the browser uses a anonymization certificate. 
+the browser may replace the AAGUID and attestation statement with a more privacy-friendly and/or more easily verifiable version of the same data (for example, by employing an anonymization CA). You can not validate against any root ca, if the browser uses a anonymization certificate.
 this library sets attestation to indirect, if you select multiple formats but don't provide any root ca.
 * hybrid soultion, clients may be discouraged by browser warnings but then you know what device they're using (statistics rulez!)
 
 ### direct attestation
 the browser proviedes data about the identificator device, the device can be identified uniquely. User could be tracked over multiple sites, because of that the browser may show a warning message about providing this data when register.
-this library sets attestation to direct, if you select multiple formats but and provide root ca's.
+this library sets attestation to direct, if you select multiple formats and provide root ca's.
 * this is probably what you want if you know what devices your clients are using and make sure that only this devices are used.
 
 ## Resident Credential
@@ -95,7 +95,7 @@ When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds`
 
 ## Requirements
 * PHP >= 7.1.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
-* Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Opera 54+, Edge 18+)
+* Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Edge 18+, Safari 13+)
 
 ## Infos about WebAuthn
 * [Wikipedia](https://en.wikipedia.org/wiki/WebAuthn)

@@ -29,12 +29,13 @@ class None extends FormatBase {
     }
 
     /**
-     * validates the certificate against root certificates
+     * validates the certificate against root certificates.
+     * Format 'none' does not contain any ca, so always false.
      * @param array $rootCas
      * @return boolean
      * @throws WebAuthnException
      */
     public function validateRootCertificate($rootCas) {
-        return true;
+        return false;
     }
 }

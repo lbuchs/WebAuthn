@@ -77,8 +77,8 @@ class WebAuthn {
         $path = \rtrim(\trim($path), '\\/');
         if (\is_dir($path)) {
             foreach (\scandir($path) as $ca) {
-                if (\is_file($path . '/' . $ca)) {
-                    $this->addRootCertificates($path . '/' . $ca);
+                if (\is_file($path . DIRECTORY_SEPARATOR . $ca)) {
+                    $this->addRootCertificates($path . DIRECTORY_SEPARATOR . $ca);
                 }
             }
         } else if (\is_file($path) && !\in_array(\realpath($path), $this->_caFiles)) {
@@ -459,6 +459,92 @@ class WebAuthn {
         }
 
         return true;
+    }
+
+    /**
+     * Downloads root certificates from FIDO Alliance Metadata Service (MDS) to a specific folder
+     * https://fidoalliance.org/metadata/
+     * @param string $certFolder Folder path to save the certificates in PEM format.
+     * @param bool $deleteCerts=true
+     * @return int number of cetificates
+     * @throws WebAuthnException
+     */
+    public function queryFidoMetaDataService($certFolder, $deleteCerts=true) {
+        $url = 'https://mds.fidoalliance.org/';
+        $raw = null;
+        if (\function_exists('curl_init')) {
+            $ch = \curl_init($url);
+            \curl_setopt($ch, CURLOPT_HEADER, false);
+            \curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            \curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            \curl_setopt($ch, CURLOPT_USERAGENT, 'github.com/lbuchs/WebAuthn - A simple PHP WebAuthn server library');
+            $raw = \curl_exec($ch);
+            \curl_close($ch);
+        } else {
+            $raw = \file_get_contents($url);
+        }
+
+        $certFolder = \rtrim(\realpath($certFolder), '\\/');
+        if (!is_dir($certFolder)) {
+            throw new WebAuthnException('Invalid folder path for query FIDO Alliance Metadata Service');
+        }
+
+        if (!\is_string($raw)) {
+            throw new WebAuthnException('Unable to query FIDO Alliance Metadata Service');
+        }
+
+        $jwt = \explode('.', $raw);
+        if (\count($jwt) !== 3) {
+            throw new WebAuthnException('Invalid JWT from FIDO Alliance Metadata Service');
+        }
+
+        if ($deleteCerts) {
+            foreach (\scandir($certFolder) as $ca) {
+                if (\substr($ca, -4) === '.pem') {
+                    if (\unlink($certFolder . DIRECTORY_SEPARATOR . $ca) === false) {
+                        throw new WebAuthnException('Cannot delete certs in folder for FIDO Alliance Metadata Service');
+                    }
+                }
+            }
+        }
+
+        list($header, $payload, $hash) = $jwt;
+        $payload = Binary\ByteBuffer::fromBase64Url($payload)->getJson();
+
+        $count = 0;
+        if (\is_object($payload) && \property_exists($payload, 'entries') && \is_array($payload->entries)) {
+            foreach ($payload->entries as $entry) {
+                if (\is_object($entry) && \property_exists($entry, 'metadataStatement') && \is_object($entry->metadataStatement)) {
+                    $description = $entry->metadataStatement->description ?? null;
+                    $attestationRootCertificates = $entry->metadataStatement->attestationRootCertificates ?? null;
+
+                    if ($description && $attestationRootCertificates) {
+
+                        // create filename
+                        $certFilename = \preg_replace('/[^a-z0-9]/i', '_', $description);
+                        $certFilename = \trim(\preg_replace('/\_{2,}/i', '_', $certFilename),'_') . '.pem';
+                        $certFilename = \strtolower($certFilename);
+
+                        // add certificate
+                        $certContent = $description . "\n";
+                        $certContent .= \str_repeat('-', \mb_strlen($description)) . "\n";
+
+                        foreach ($attestationRootCertificates as $attestationRootCertificate) {
+                            $count++;
+                            $certContent .= "\n-----BEGIN CERTIFICATE-----\n";
+                            $certContent .= \chunk_split(\trim($attestationRootCertificate), 64, "\n");
+                            $certContent .= "-----END CERTIFICATE-----\n";
+                        }
+
+                        if (\file_put_contents($certFolder . DIRECTORY_SEPARATOR . $certFilename, $certContent) === false) {
+                            throw new WebAuthnException('unable to save certificate from FIDO Alliance Metadata Service');
+                        }
+                    }
+                }
+            }
+        }
+
+        return $count;
     }
 
     // -----------------------------------------------
