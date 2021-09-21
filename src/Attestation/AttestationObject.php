@@ -84,10 +84,10 @@ class AttestationObject {
         if ($pem) {
             $certInfo = \openssl_x509_parse($pem);
             if (\is_array($certInfo) && \is_array($certInfo['issuer'])) {
-                if ($certInfo['issuer']['CN']) {
+                if (isset($certInfo['issuer']['CN'])) {
                     $issuer .= \trim($certInfo['issuer']['CN']);
                 }
-                if ($certInfo['issuer']['O'] || $certInfo['issuer']['OU']) {
+                if (isset($certInfo['issuer']['O']) || isset($certInfo['issuer']['OU'])) {
                     if ($issuer) {
                         $issuer .= ' (' . \trim($certInfo['issuer']['O'] . ' ' . $certInfo['issuer']['OU']) . ')';
                     } else {
@@ -110,10 +110,10 @@ class AttestationObject {
         if ($pem) {
             $certInfo = \openssl_x509_parse($pem);
             if (\is_array($certInfo) && \is_array($certInfo['subject'])) {
-                if ($certInfo['subject']['CN']) {
+                if (isset($certInfo['subject']['CN'])) {
                     $subject .= \trim($certInfo['subject']['CN']);
                 }
-                if ($certInfo['subject']['O'] || $certInfo['subject']['OU']) {
+                if (isset($certInfo['subject']['O']) || isset($certInfo['subject']['OU'])) {
                     if ($subject) {
                         $subject .= ' (' . \trim($certInfo['subject']['O'] . ' ' . $certInfo['subject']['OU']) . ')';
                     } else {
