@@ -219,9 +219,14 @@ try {
         $clientDataJSON = base64_decode($post->clientDataJSON);
         $authenticatorData = base64_decode($post->authenticatorData);
         $signature = base64_decode($post->signature);
+        $userHandle = base64_decode($post->userHandle);
         $id = base64_decode($post->id);
         $challenge = $_SESSION['challenge'];
         $credentialPublicKey = null;
+
+        if ($userHandle && $userHandle !== 'demo') {
+            throw new \Exception('Invalid user: not «demo» but «' . htmlspecialchars($userHandle) . '»!');
+        }
 
         // looking up correspondending public key of the credential id
         // you should also validate that only ids of the given user name
@@ -275,12 +280,15 @@ try {
 
                     if (is_bool($value)) {
                         $value = $value ? 'yes' : 'no';
-                    }
-                    if (is_null($value)) {
+
+                    } else if (is_null($value)) {
                         $value = 'null';
-                    }
-                    if (is_object($value)) {
-                        $value = '[binary data as hex] ' . chunk_split(strval($value));
+
+                    } else if (is_object($value)) {
+                        $value = chunk_split(strval($value), 64);
+
+                    } else if (is_string($value) && strlen($value) > 0 && htmlspecialchars($value) === '') {
+                        $value = chunk_split(bin2hex($value), 64);
                     }
                     $html .= '<tr><td>' . htmlspecialchars($key) . '</td><td style="font-family:monospace;">' . nl2br(htmlspecialchars($value)) . '</td>';
                 }
@@ -303,11 +311,11 @@ try {
         $msg = null;
 
         // fetch only 1x / 24h
-        $lastFetch = \is_file('rootCertificates/lastMdsFetch.txt') ? \strtotime(\file_get_contents('rootCertificates/lastMdsFetch.txt')) : 0;
+        $lastFetch = \is_file($mdsFolder .  '/lastMdsFetch.txt') ? \strtotime(\file_get_contents($mdsFolder .  '/lastMdsFetch.txt')) : 0;
         if ($lastFetch + (3600*48) < \time()) {
             $cnt = $WebAuthn->queryFidoMetaDataService($mdsFolder);
             $success = true;
-            \file_put_contents('rootCertificates/lastMdsFetch.txt', date('r'));
+            \file_put_contents($mdsFolder .  '/lastMdsFetch.txt', date('r'));
             $msg = 'successfully queried FIDO Alliance Metadata Service - ' . $cnt . ' certificates downloaded.';
 
         } else {

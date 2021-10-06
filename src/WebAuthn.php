@@ -69,15 +69,19 @@ class WebAuthn {
     /**
      * add a root certificate to verify new registrations
      * @param string $path file path of / directory with root certificates
+     * @param array|null $certFileExtensions if adding a direction, all files with provided extension are added. default: pem, crt, cer, der
      */
-    public function addRootCertificates($path) {
+    public function addRootCertificates($path, $certFileExtensions=null) {
         if (!\is_array($this->_caFiles)) {
             $this->_caFiles = array();
+        }
+        if ($certFileExtensions === null) {
+            $certFileExtensions = array('pem', 'crt', 'cer', 'der');
         }
         $path = \rtrim(\trim($path), '\\/');
         if (\is_dir($path)) {
             foreach (\scandir($path) as $ca) {
-                if (\is_file($path . DIRECTORY_SEPARATOR . $ca)) {
+                if (\is_file($path . DIRECTORY_SEPARATOR . $ca) && \in_array(\strtolower(\pathinfo($ca, PATHINFO_EXTENSION)), $certFileExtensions)) {
                     $this->addRootCertificates($path . DIRECTORY_SEPARATOR . $ca);
                 }
             }

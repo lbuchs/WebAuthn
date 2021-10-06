@@ -108,11 +108,13 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                 // convert to base64
             }).then(function(cred) {
+                console.log(cred);
                 return {
                     id: cred.rawId ? arrayBufferToBase64(cred.rawId) : null,
                     clientDataJSON: cred.response.clientDataJSON  ? arrayBufferToBase64(cred.response.clientDataJSON) : null,
                     authenticatorData: cred.response.authenticatorData ? arrayBufferToBase64(cred.response.authenticatorData) : null,
-                    signature : cred.response.signature ? arrayBufferToBase64(cred.response.signature) : null
+                    signature: cred.response.signature ? arrayBufferToBase64(cred.response.signature) : null,
+                    userHandle: cred.response.userHandle ? arrayBufferToBase64(cred.response.userHandle) : null
                 };
 
                 // transfer to server
@@ -344,7 +346,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                     <div>
                         <input type="checkbox" id="requireResidentKey" name="requireResidentKey">
-                        <label for="requireResidentKey">Use Client-side-resident Public Key Credential Source</label>
+                        <label for="requireResidentKey">Use Client-side discoverable Credentials</label>
                     </div>
 
                     <div>&nbsp;</div>
