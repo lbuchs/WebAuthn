@@ -42,6 +42,15 @@ try {
     $fn = filter_input(INPUT_GET, 'fn');
     $requireResidentKey = !!$_GET['requireResidentKey'];
     $userVerification = filter_input(INPUT_GET, 'userVerification', FILTER_SANITIZE_SPECIAL_CHARS);
+
+    $userId = filter_input(INPUT_GET, 'userId', FILTER_SANITIZE_SPECIAL_CHARS);
+    $userName = filter_input(INPUT_GET, 'userName', FILTER_SANITIZE_SPECIAL_CHARS);
+    $userDisplayName = filter_input(INPUT_GET, 'userDisplayName', FILTER_SANITIZE_SPECIAL_CHARS);
+
+    $userId = preg_replace('/[^0-9a-f]/i', '', $userId);
+    $userName = preg_replace('/[^0-9a-z]/i', '', $userName);
+    $userDisplayName = preg_replace('/[^0-9a-z öüäéèàÖÜÄÉÈÀÂÊÎÔÛâêîôû]/i', '', $userDisplayName);
+
     $post = trim(file_get_contents('php://input'));
     if ($post) {
         $post = json_decode($post);
@@ -134,8 +143,9 @@ try {
     // ------------------------------------
 
     if ($fn === 'getCreateArgs') {
-        $createArgs = $WebAuthn->getCreateArgs('demo', 'demo', 'Demo Demolin', 20, $requireResidentKey, $userVerification, $crossPlatformAttachment);
+        $createArgs = $WebAuthn->getCreateArgs(\hex2bin($userId), $userName, $userDisplayName, 20, $requireResidentKey, $userVerification, $crossPlatformAttachment);
 
+        header('Content-Type: application/json');
         print(json_encode($createArgs));
 
         // save challange to session. you have to deliver it to processGet later.
@@ -161,17 +171,20 @@ try {
             // from the database.
             if (is_array($_SESSION['registrations'])) {
                 foreach ($_SESSION['registrations'] as $reg) {
-                    $ids[] = $reg->credentialId;
+                    if ($reg->userId === $userId) {
+                        $ids[] = $reg->credentialId;
+                    }
                 }
             }
 
             if (count($ids) === 0) {
-                throw new Exception('no registrations in session.');
+                throw new Exception('no registrations in session for userId ' . $userId);
             }
         }
 
         $getArgs = $WebAuthn->getGetArgs($ids, 20, $typeUsb, $typeNfc, $typeBle, $typeInt, $userVerification);
 
+        header('Content-Type: application/json');
         print(json_encode($getArgs));
 
         // save challange to session. you have to deliver it to processGet later.
@@ -194,6 +207,11 @@ try {
         // with the user name.
         $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, $userVerification === 'required', true, false);
 
+        // add user infos
+        $data->userId = $userId;
+        $data->userName = $userName;
+        $data->userDisplayName = $userDisplayName;
+
         if (!array_key_exists('registrations', $_SESSION) || !is_array($_SESSION['registrations'])) {
             $_SESSION['registrations'] = array();
         }
@@ -207,6 +225,8 @@ try {
         $return = new stdClass();
         $return->success = true;
         $return->msg = $msg;
+
+        header('Content-Type: application/json');
         print(json_encode($return));
 
 
@@ -224,10 +244,6 @@ try {
         $challenge = $_SESSION['challenge'];
         $credentialPublicKey = null;
 
-        if ($userHandle && $userHandle !== 'demo') {
-            throw new \Exception('Invalid user: not «demo» but «' . htmlspecialchars($userHandle) . '»!');
-        }
-
         // looking up correspondending public key of the credential id
         // you should also validate that only ids of the given user name
         // are taken for the login.
@@ -244,11 +260,18 @@ try {
             throw new Exception('Public Key for credential ID not found!');
         }
 
+        // if we have resident key, we have to verify that the userHandle is the provided userId at registration
+        if ($requireResidentKey && $userHandle !== hex2bin($reg->userId)) {
+            throw new \Exception('userId doesnt match (is ' . bin2hex($userHandle) . ' but expect ' . $reg->userId . ')');
+        }
+
         // process the get request. throws WebAuthnException if it fails
         $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $credentialPublicKey, $challenge, null, $userVerification === 'required');
 
         $return = new stdClass();
         $return->success = true;
+
+        header('Content-Type: application/json');
         print(json_encode($return));
 
     // ------------------------------------
@@ -262,6 +285,8 @@ try {
         $return = new stdClass();
         $return->success = true;
         $return->msg = 'all registrations deleted';
+
+        header('Content-Type: application/json');
         print(json_encode($return));
 
     // ------------------------------------
@@ -298,6 +323,8 @@ try {
             $html .= '<p>There are no registrations in this session.</p>';
         }
         $html .= '</body></html>';
+
+        header('Content-Type: text/html');
         print $html;
 
     // ------------------------------------
@@ -325,6 +352,8 @@ try {
         $return = new stdClass();
         $return->success = $success;
         $return->msg = $msg;
+
+        header('Content-Type: application/json');
         print(json_encode($return));
     }
 
@@ -332,5 +361,7 @@ try {
     $return = new stdClass();
     $return->success = false;
     $return->msg = $ex->getMessage();
+
+    header('Content-Type: application/json');
     print(json_encode($return));
 }

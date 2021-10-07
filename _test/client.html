@@ -251,6 +251,10 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             url += '&fmt_tpm=' + (document.getElementById('fmt_tpm').checked ? '1' : '0');
             url += '&rpId=' + encodeURIComponent(document.getElementById('rpId').value);
 
+            url += '&userId=' + encodeURIComponent(document.getElementById('userId').value);
+            url += '&userName=' + encodeURIComponent(document.getElementById('userName').value);
+            url += '&userDisplayName=' + encodeURIComponent(document.getElementById('userDisplayName').value);
+
             if (document.getElementById('userVerification_required').checked) {
                 url += '&userVerification=required';
 
@@ -346,7 +350,10 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                     <div>
                         <input type="checkbox" id="requireResidentKey" name="requireResidentKey">
-                        <label for="requireResidentKey">Use Client-side discoverable Credentials</label>
+                        <label for="requireResidentKey">Use Client-side discoverable Credentials
+                            <i style="font-size: 0.8em;">Warning: most client-side modules and authenticators don't allow to delete single client side credentials.
+                                You have to reset the full device to remove the credentials again.</i>
+                        </label>
                     </div>
 
                     <div>&nbsp;</div>
@@ -356,6 +363,27 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                     <div>
                         <label for="rpId">RP ID:</label>
                         <input type="text" id="rpId" name="rpId" value="">
+                    </div>
+
+                    <div>&nbsp;</div>
+                    <div style="font-weight: bold">User</div>
+                    <div style="margin-bottom:12px">
+                        <label for="userId">User ID (Hex):</label>
+                        <input type="text" id="userId" name="userId" value="64656d6f64656d6f" required pattern="[0-9a-fA-F]{2,}">
+                        <i style="font-size: 0.8em;">You get the user ID back when checking registration (as userHandle), if you're using client-side discoverable credentials.
+                        You can identify with this ID the user who wants to login.
+                        A user handle is an opaque byte sequence with a maximum size of 64 bytes, and is not meant to be displayed to the user.
+                        The user handle MUST NOT contain personally identifying information about the user, such as a username or e-mail address.</i>
+                    </div>
+                    <div style="margin-bottom:12px">
+                        <label for="userName">User Name:</label>
+                        <input type="text" id="userName" name="userName" value="demo" required pattern="[0-9a-zA-Z]{2,}">
+                        <i style="font-size: 0.8em;">only for display, i.e., aiding the user in determining the difference between user accounts with similar display names.</i>
+                    </div>
+                    <div style="margin-bottom:6px">
+                        <label for="userDisplayName">User Display Name:</label>
+                        <input type="text" id="userDisplayName" name="userDisplayName" value="Demo Demolin" required>
+                        <i style="font-size: 0.8em;">A human-palatable name for the user account, intended only for display.</i>
                     </div>
 
                     <div>&nbsp;</div>
@@ -484,6 +512,9 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                         the client may change the assertion from the authenticator (for instance, using an anonymization CA),<br>
                         the browser may not warn about providing informations about your device.
                    </div>
+                    <div style="margin-top:20px;font-size: 0.7em;font-style: italic">
+                        Copyright &copy; 2021 Lukas Buchs - <a href="https://raw.githubusercontent.com/lbuchs/WebAuthn/master/LICENSE">license therms</a>
+                    </div>
 
                 </div>
             </div>
