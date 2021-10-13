@@ -67,9 +67,8 @@ the browser proviedes data about the identificator device, the device can be ide
 this library sets attestation to direct, if you select multiple formats and provide root ca's.
 * this is probably what you want if you know what devices your clients are using and make sure that only this devices are used.
 
-## Resident Credential
-A Client-side-resident Public Key Credential Source, or Resident Credential for short,
-is a public key credential source whose credential private key is stored in the authenticator,
+## Client-side discoverable Credentials
+A Client-side discoverable Credential Source is a public key credential source whose credential private key is stored in the authenticator,
 client or client device. Such client-side storage requires a resident credential capable authenticator.
 This is only supported by FIDO2 hardware, not by older U2F hardware.
 
@@ -91,7 +90,10 @@ When calling `WebAuthn\WebAuthn->getCreateArgs`, set `$requireResidentKey` to tr
 to notify the authenticator that he should save the registration in its memory.
 
 #### on login
-When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds` (the authenticator will look up the ids in its own memory).
+When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds` (the authenticator will look up the ids in its own memory and returns the user ID as userHandle).
+
+#### disadvantage
+The RP ID (= domain) is saved on the authenticator. So If an authenticator is lost, its theoretically possible to find the services, which the authenticator is used and login there.
 
 ## Requirements
 * PHP >= 7.1.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
