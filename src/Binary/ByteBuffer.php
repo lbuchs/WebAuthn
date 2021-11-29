@@ -211,7 +211,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     /**
      * jsonSerialize interface
      * return binary data in RFC 1342-Like serialized string
-     * @return \stdClass
+     * @return string
      */
     public function jsonSerialize() {
         if (ByteBuffer::$useBase64UrlEncoding) {
@@ -240,11 +240,33 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     }
 
     /**
+     * (PHP 8 deprecates Serializable-Interface)
+     * @return array
+     */
+    public function __serialize() {
+        return [
+            'data' => \serialize($this->_data)
+        ];
+    }
+
+    /**
      * object to string
      * @return string
      */
     public function __toString() {
         return $this->getHex();
+    }
+
+    /**
+     * (PHP 8 deprecates Serializable-Interface)
+     * @param array $data
+     * @return void
+     */
+    public function __unserialize($data) {
+        if ($data && isset($data['data'])) {
+            $this->_data = \unserialize($data['data']);
+            $this->_length = \strlen($this->_data);
+        }
     }
 
     // -----------------------
