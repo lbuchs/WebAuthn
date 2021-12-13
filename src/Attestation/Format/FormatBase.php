@@ -27,7 +27,7 @@ abstract class FormatBase {
      */
     public function __destruct() {
         // delete X.509 chain certificate file after use
-        if (\is_file($this->_x5c_tempFile)) {
+        if ($this->_x5c_tempFile && \is_file($this->_x5c_tempFile)) {
             \unlink($this->_x5c_tempFile);
         }
     }
@@ -37,7 +37,7 @@ abstract class FormatBase {
      * @return string|null
      */
     public function getCertificateChain() {
-        if (\is_file($this->_x5c_tempFile)) {
+        if ($this->_x5c_tempFile && \is_file($this->_x5c_tempFile)) {
             return \file_get_contents($this->_x5c_tempFile);
         }
         return null;
