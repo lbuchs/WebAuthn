@@ -534,9 +534,10 @@ class WebAuthn {
                         $certContent .= \str_repeat('-', \mb_strlen($description)) . "\n";
 
                         foreach ($attestationRootCertificates as $attestationRootCertificate) {
+                            $attestationRootCertificate = \str_replace(["\n", "\r", ' '], '', \trim($attestationRootCertificate));
                             $count++;
                             $certContent .= "\n-----BEGIN CERTIFICATE-----\n";
-                            $certContent .= \chunk_split(\trim($attestationRootCertificate), 64, "\n");
+                            $certContent .= \chunk_split($attestationRootCertificate, 64, "\n");
                             $certContent .= "-----END CERTIFICATE-----\n";
                         }
 
