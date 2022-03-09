@@ -451,14 +451,20 @@ class WebAuthn {
             throw new WebAuthnException('invalid signature', WebAuthnException::INVALID_SIGNATURE);
         }
 
-        // 17. If the signature counter value authData.signCount is nonzero,
-        //     if less than or equal to the signature counter value stored,
-        //     is a signal that the authenticator may be cloned
         $signatureCounter = $authenticatorObj->getSignCount();
-        if ($signatureCounter > 0) {
+        if ($signatureCounter !== 0) {
             $this->_signatureCounter = $signatureCounter;
-            if ($prevSignatureCnt !== null && $prevSignatureCnt >= $signatureCounter) {
-                throw new WebAuthnException('signature counter not valid', WebAuthnException::SIGNATURE_COUNTER);
+        }
+
+        // 17. If either of the signature counter value authData.signCount or
+        //     previous signature count is nonzero, and if authData.signCount
+        //     less than or equal to previous signature count, it's a signal
+        //     that the authenticator may be cloned
+        if ($prevSignatureCnt !== null) {
+            if ($signatureCounter !== 0 || $prevSignatureCnt !== 0) {
+                if ($prevSignatureCnt >= $signatureCounter) {
+                    throw new WebAuthnException('signature counter not valid', WebAuthnException::SIGNATURE_COUNTER);
+                }
             }
         }
 
