@@ -248,19 +248,22 @@ class AuthenticatorData {
         if (\strlen($binary) <= 55) {
             throw new WebAuthnException('Attested data should be present but is missing', WebAuthnException::INVALID_DATA);
         }
+        
+        $jsoffset=0;
+        if (strlen($binary)<196) $jsoffset = 196 - strlen($binary); 
 
         // The AAGUID of the authenticator
-        $attestedCData->aaguid = \substr($binary, 37, 16);
+        $attestedCData->aaguid = \substr($binary, 37, max(0, 16 - $jsoffset));
 
         //Byte length L of Credential ID, 16-bit unsigned big-endian integer.
-        $length = \unpack('nlength', \substr($binary, 53, 2))['length'];
-        $attestedCData->credentialId = \substr($binary, 55, $length);
+        $length = \unpack('nlength', \substr($binary, 53 - $jsoffset, 2))['length'];
+        $attestedCData->credentialId = \substr($binary, 55 - $jsoffset, $length);
 
         // set end offset
-        $endOffset = 55 + $length;
+        $endOffset = 55 - $jsoffset + $length;
 
         // extract public key
-        $attestedCData->credentialPublicKey = $this->_readCredentialPublicKey($binary, 55 + $length, $endOffset);
+        $attestedCData->credentialPublicKey = $this->_readCredentialPublicKey($binary, 55 - $jsoffset + $length, $endOffset);
 
         return $attestedCData;
     }
