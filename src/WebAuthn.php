@@ -105,7 +105,11 @@ class WebAuthn {
      * @param string $userName
      * @param string $userDisplayName
      * @param int $timeout timeout in seconds
-     * @param bool $requireResidentKey true, if the key should be stored by the authentication device
+     * @param bool|string $requireResidentKey      'required', if the key should be stored by the authentication device
+     *                                             Valid values:
+     *                                             true = required
+     *                                             false = preferred
+     *                                             string 'required' 'preferred' 'discouraged'
      * @param bool|string $requireUserVerification indicates that you require user verification and will fail the operation
      *                                             if the response does not have the UV flag set.
      *                                             Valid values:
@@ -139,8 +143,12 @@ class WebAuthn {
 
         $args->publicKey->authenticatorSelection = new \stdClass();
         $args->publicKey->authenticatorSelection->userVerification = $requireUserVerification;
-        if ($requireResidentKey) {
+        if (\is_bool($requireResidentKey) && $requireResidentKey) {
             $args->publicKey->authenticatorSelection->requireResidentKey = true;
+        } else if (\is_string($requireResidentKey) && \in_array(\strtolower($requireResidentKey), ['required', 'preferred', 'discouraged'])) {
+            $requireResidentKey = \strtolower($requireResidentKey);
+            $args->publicKey->authenticatorSelection->residentKey = $requireResidentKey;
+            $args->publicKey->authenticatorSelection->requireResidentKey = $requireResidentKey === 'required';
         }
         if (is_bool($crossPlatformAttachment)) {
             $args->publicKey->authenticatorSelection->authenticatorAttachment = $crossPlatformAttachment ? 'cross-platform' : 'platform';
