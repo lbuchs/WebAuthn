@@ -40,7 +40,7 @@ try {
 
     // read get argument and post body
     $fn = filter_input(INPUT_GET, 'fn');
-    $requireResidentKey = !!$_GET['requireResidentKey'];
+    $requireResidentKey = !!filter_input(INPUT_GET, 'requireResidentKey');
     $userVerification = filter_input(INPUT_GET, 'userVerification', FILTER_SANITIZE_SPECIAL_CHARS);
 
     $userId = filter_input(INPUT_GET, 'userId', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -60,30 +60,30 @@ try {
 
         // Formats
         $formats = array();
-        if ($_GET['fmt_android-key']) {
+        if (filter_input(INPUT_GET, 'fmt_android-key')) {
             $formats[] = 'android-key';
         }
-        if ($_GET['fmt_android-safetynet']) {
+        if (filter_input(INPUT_GET, 'fmt_android-safetynet')) {
             $formats[] = 'android-safetynet';
         }
-        if ($_GET['fmt_apple']) {
+        if (filter_input(INPUT_GET, 'fmt_apple')) {
             $formats[] = 'apple';
         }
-        if ($_GET['fmt_fido-u2f']) {
+        if (filter_input(INPUT_GET, 'fmt_fido-u2f')) {
             $formats[] = 'fido-u2f';
         }
-        if ($_GET['fmt_none']) {
+        if (filter_input(INPUT_GET, 'fmt_none')) {
             $formats[] = 'none';
         }
-        if ($_GET['fmt_packed']) {
+        if (filter_input(INPUT_GET, 'fmt_packed')) {
             $formats[] = 'packed';
         }
-        if ($_GET['fmt_tpm']) {
+        if (filter_input(INPUT_GET, 'fmt_tpm')) {
             $formats[] = 'tpm';
         }
 
         $rpId = 'localhost';
-        if ($_GET['rpId']) {
+        if (filter_input(INPUT_GET, 'rpId')) {
             $rpId = filter_input(INPUT_GET, 'rpId', FILTER_VALIDATE_DOMAIN);
             if ($rpId === false) {
                 throw new Exception('invalid relying party ID');
@@ -91,10 +91,10 @@ try {
         }
 
         // types selected on front end
-        $typeUsb = !!$_GET['type_usb'];
-        $typeNfc = !!$_GET['type_nfc'];
-        $typeBle = !!$_GET['type_ble'];
-        $typeInt = !!$_GET['type_int'];
+        $typeUsb = !!filter_input(INPUT_GET, 'type_usb');
+        $typeNfc = !!filter_input(INPUT_GET, 'type_nfc');
+        $typeBle = !!filter_input(INPUT_GET, 'type_ble');
+        $typeInt = !!filter_input(INPUT_GET, 'type_int');
 
         // cross-platform: true, if type internal is not allowed
         //                 false, if only internal is allowed
@@ -113,26 +113,26 @@ try {
         $WebAuthn = new lbuchs\WebAuthn\WebAuthn('WebAuthn Library', $rpId, $formats);
 
         // add root certificates to validate new registrations
-        if ($_GET['solo']) {
+        if (filter_input(INPUT_GET, 'solo')) {
             $WebAuthn->addRootCertificates('rootCertificates/solo.pem');
         }
-        if ($_GET['apple']) {
+        if (filter_input(INPUT_GET, 'apple')) {
             $WebAuthn->addRootCertificates('rootCertificates/apple.pem');
         }
-        if ($_GET['yubico']) {
+        if (filter_input(INPUT_GET, 'yubico')) {
             $WebAuthn->addRootCertificates('rootCertificates/yubico.pem');
         }
-        if ($_GET['hypersecu']) {
+        if (filter_input(INPUT_GET, 'hypersecu')) {
             $WebAuthn->addRootCertificates('rootCertificates/hypersecu.pem');
         }
-        if ($_GET['google']) {
+        if (filter_input(INPUT_GET, 'google')) {
             $WebAuthn->addRootCertificates('rootCertificates/globalSign.pem');
             $WebAuthn->addRootCertificates('rootCertificates/googleHardware.pem');
         }
-        if ($_GET['microsoft']) {
+        if (filter_input(INPUT_GET, 'microsoft')) {
             $WebAuthn->addRootCertificates('rootCertificates/microsoftTpmCollection.pem');
         }
-        if ($_GET['mds']) {
+        if (filter_input(INPUT_GET, 'mds')) {
             $WebAuthn->addRootCertificates('rootCertificates/mds');
         }
 

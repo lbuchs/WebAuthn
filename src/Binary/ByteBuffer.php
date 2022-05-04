@@ -27,7 +27,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     private $_length;
 
     public function __construct($binaryData) {
-        $this->_data = $binaryData;
+        $this->_data = (string)$binaryData;
         $this->_length = \strlen($binaryData);
     }
 
@@ -41,7 +41,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * @param string $base64url
      * @return ByteBuffer
      */
-    public static function fromBase64Url($base64url) {
+    public static function fromBase64Url($base64url): ByteBuffer {
         $bin = self::_base64url_decode($base64url);
         if ($bin === false) {
             throw new WebAuthnException('ByteBuffer: Invalid base64 url string', WebAuthnException::BYTEBUFFER);
@@ -54,7 +54,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * @param string $hex
      * @return ByteBuffer
      */
-    public static function fromHex($hex) {
+    public static function fromHex($hex): ByteBuffer {
         $bin = \hex2bin($hex);
         if ($bin === false) {
             throw new WebAuthnException('ByteBuffer: Invalid hex string', WebAuthnException::BYTEBUFFER);
@@ -67,7 +67,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * @param string $length
      * @return ByteBuffer
      */
-    public static function randomBuffer($length) {
+    public static function randomBuffer($length): ByteBuffer {
         if (\function_exists('random_bytes')) { // >PHP 7.0
             return new ByteBuffer(\random_bytes($length));
 
@@ -83,14 +83,14 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     // PUBLIC
     // -----------------------
 
-    public function getBytes($offset, $length) {
+    public function getBytes($offset, $length): string {
         if ($offset < 0 || $length < 0 || ($offset + $length > $this->_length)) {
             throw new WebAuthnException('ByteBuffer: Invalid offset or length', WebAuthnException::BYTEBUFFER);
         }
         return \substr($this->_data, $offset, $length);
     }
 
-    public function getByteVal($offset) {
+    public function getByteVal($offset): int {
         if ($offset < 0 || $offset >= $this->_length) {
             throw new WebAuthnException('ByteBuffer: Invalid offset', WebAuthnException::BYTEBUFFER);
         }
@@ -105,7 +105,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
         return $data;
     }
 
-    public function getLength() {
+    public function getLength(): int {
         return $this->_length;
     }
 
@@ -181,7 +181,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     /**
      * @return string
      */
-    public function getBinaryString() {
+    public function getBinaryString(): string {
         return $this->_data;
     }
 
@@ -189,21 +189,21 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * @param string $buffer
      * @return bool
      */
-    public function equals($buffer) {
+    public function equals($buffer): bool {
         return is_string($this->_data) && $this->_data === $buffer->data;
     }
 
     /**
      * @return string
      */
-    public function getHex() {
+    public function getHex(): string {
         return \bin2hex($this->_data);
     }
 
     /**
      * @return bool
      */
-    public function isEmpty() {
+    public function isEmpty(): bool {
         return $this->_length === 0;
     }
 
@@ -213,7 +213,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * return binary data in RFC 1342-Like serialized string
      * @return string
      */
-    public function jsonSerialize() {
+    public function jsonSerialize(): string {
         if (ByteBuffer::$useBase64UrlEncoding) {
             return self::_base64url_encode($this->_data);
 
@@ -226,7 +226,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * Serializable-Interface
      * @return string
      */
-    public function serialize() {
+    public function serialize(): string {
         return \serialize($this->_data);
     }
 
@@ -243,7 +243,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * (PHP 8 deprecates Serializable-Interface)
      * @return array
      */
-    public function __serialize() {
+    public function __serialize(): array {
         return [
             'data' => \serialize($this->_data)
         ];
@@ -253,7 +253,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * object to string
      * @return string
      */
-    public function __toString() {
+    public function __toString(): string {
         return $this->getHex();
     }
 
@@ -278,7 +278,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * @param string $data
      * @return string
      */
-    protected static function _base64url_decode($data) {
+    protected static function _base64url_decode($data): string {
         return \base64_decode(\strtr($data, '-_', '+/') . \str_repeat('=', 3 - (3 + \strlen($data)) % 4));
     }
 
@@ -287,7 +287,7 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
      * @param string $data
      * @return string
      */
-    protected static function _base64url_encode($data) {
+    protected static function _base64url_encode($data): string {
         return \rtrim(\strtr(\base64_encode($data), '+/', '-_'), '=');
     }
 }
