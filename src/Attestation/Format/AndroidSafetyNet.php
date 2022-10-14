@@ -52,7 +52,7 @@ class AndroidSafetyNet extends FormatBase {
             throw new WebAuthnException('invalid JWS payload', WebAuthnException::INVALID_DATA);
         }
 
-        if (!$header->x5c || !is_array($header->x5c) || count($header->x5c) === 0) {
+        if (!isset($header->x5c) || !is_array($header->x5c) || count($header->x5c) === 0) {
             throw new WebAuthnException('No X.509 signature in JWS Header', WebAuthnException::INVALID_DATA);
         }
 
@@ -89,7 +89,7 @@ class AndroidSafetyNet extends FormatBase {
 
         // Verify that the nonce in the response is identical to the Base64 encoding
         // of the SHA-256 hash of the concatenation of authenticatorData and clientDataHash.
-        if (!$this->_payload->nonce || $this->_payload->nonce !== \base64_encode(\hash('SHA256', $this->_authenticatorData->getBinary() . $clientDataHash, true))) {
+        if (empty($this->_payload->nonce) || $this->_payload->nonce !== \base64_encode(\hash('SHA256', $this->_authenticatorData->getBinary() . $clientDataHash, true))) {
             throw new WebAuthnException('invalid nonce in JWS payload', WebAuthnException::INVALID_DATA);
         }
 
@@ -100,7 +100,7 @@ class AndroidSafetyNet extends FormatBase {
         }
 
         // Verify that the ctsProfileMatch attribute in the payload of response is true.
-        if (!$this->_payload->ctsProfileMatch) {
+        if (empty($this->_payload->ctsProfileMatch)) {
             throw new WebAuthnException('invalid ctsProfileMatch in payload', WebAuthnException::INVALID_DATA);
         }
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2018 Lukas Buchs
+ * Copyright (C) 2022 Lukas Buchs
  * license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
  *
  * Server test script for WebAuthn library. Saves new registrations in session.
@@ -312,7 +312,7 @@ try {
                     } else if (is_object($value)) {
                         $value = chunk_split(strval($value), 64);
 
-                    } else if (is_string($value) && strlen($value) > 0 && htmlspecialchars($value) === '') {
+                    } else if (is_string($value) && strlen($value) > 0 && htmlspecialchars($value, ENT_QUOTES) === '') {
                         $value = chunk_split(bin2hex($value), 64);
                     }
                     $html .= '<tr><td>' . htmlspecialchars($key) . '</td><td style="font-family:monospace;">' . nl2br(htmlspecialchars($value)) . '</td>';

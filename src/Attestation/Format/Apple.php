@@ -105,7 +105,7 @@ class Apple extends FormatBase {
 
         // Verify that nonce equals the value of the extension with OID ( 1.2.840.113635.100.8.2 ) in credCert.
         $parsedCredCert = openssl_x509_parse($credCert);
-        $nonceExtension = isset($parsedCredCert['extensions']['1.2.840.113635.100.8.2']) ? $parsedCredCert['extensions']['1.2.840.113635.100.8.2'] : '';
+        $nonceExtension = $parsedCredCert['extensions']['1.2.840.113635.100.8.2'] ?? '';
 
         // nonce padded by ASN.1 string: 30 24 A1 22 04 20
         // 30     — type tag indicating sequence
