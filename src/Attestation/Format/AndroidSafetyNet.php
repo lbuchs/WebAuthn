@@ -100,7 +100,7 @@ class AndroidSafetyNet extends FormatBase {
         }
 
         // Verify that the ctsProfileMatch attribute in the payload of response is true.
-        if (!$this->_payload->ctsProfileMatch) {
+        if (!isset($this->_payload->ctsProfileMatch) || !$this->_payload->ctsProfileMatch) {
             throw new WebAuthnException('invalid ctsProfileMatch in payload', WebAuthnException::INVALID_DATA);
         }
 
