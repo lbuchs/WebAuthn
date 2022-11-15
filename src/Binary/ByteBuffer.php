@@ -186,11 +186,18 @@ class ByteBuffer implements \JsonSerializable, \Serializable {
     }
 
     /**
-     * @param string $buffer
+     * @param string|ByteBuffer $buffer
      * @return bool
      */
     public function equals($buffer): bool {
-        return is_string($this->_data) && $this->_data === $buffer->data;
+        if (is_object($buffer) && $buffer instanceof ByteBuffer) {
+            return $buffer->getBinaryString() === $this->getBinaryString();
+
+        } else if (is_string($buffer)) {
+            return $buffer === $this->getBinaryString();
+        }
+        
+        return false;
     }
 
     /**
