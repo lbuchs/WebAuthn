@@ -96,14 +96,23 @@ abstract class FormatBase {
         if (\is_array($this->_x5c_chain) && \count($this->_x5c_chain) > 0) {
             foreach ($this->_x5c_chain as $x5c) {
                 $certInfo = \openssl_x509_parse($this->_createCertificatePem($x5c));
-                // check if issuer = subject (self signed)
+
+                // check if certificate is self signed
                 if (\is_array($certInfo) && \is_array($certInfo['issuer']) && \is_array($certInfo['subject'])) {
-                    $selfSigned = true;
-                    foreach ($certInfo['issuer'] as $k => $v) {
-                        if ($certInfo['subject'][$k] !== $v) {
-                            $selfSigned = false;
-                            break;
-                        }
+                    $selfSigned = false;
+
+                    $subjectKeyIdentifier = $certInfo['extensions']['subjectKeyIdentifier'] ?? null;
+                    $authorityKeyIdentifier = $certInfo['extensions']['authorityKeyIdentifier'] ?? null;
+
+                    if ($authorityKeyIdentifier && substr($authorityKeyIdentifier, 0, 6) === 'keyid:') {
+                        $authorityKeyIdentifier = substr($authorityKeyIdentifier, 6);
+                    }
+                    if ($subjectKeyIdentifier && substr($subjectKeyIdentifier, 0, 6) === 'keyid:') {
+                        $subjectKeyIdentifier = substr($subjectKeyIdentifier, 6);
+                    }
+
+                    if (($subjectKeyIdentifier && !$authorityKeyIdentifier) || ($authorityKeyIdentifier && $authorityKeyIdentifier === $subjectKeyIdentifier)) {
+                        $selfSigned = true;
                     }
 
                     if (!$selfSigned) {
