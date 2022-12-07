@@ -13,64 +13,57 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
          * creates a new FIDO2 registration
          * @returns {undefined}
          */
-        function newregistration() {
+        async function createRegistration() {
+            try {
 
-            if (!window.fetch || !navigator.credentials || !navigator.credentials.create) {
-                window.alert('Browser not supported.');
-                return;
-            }
+                // check browser support
+                if (!window.fetch || !navigator.credentials || !navigator.credentials.create) {
+                    throw new Error('Browser not supported.');
+                }
 
-            // get default args
-            window.fetch('server.php?fn=getCreateArgs' + getGetParams(), {method:'GET',cache:'no-cache'}).then(function(response) {
-                return response.json();
-
-                // convert base64 to arraybuffer
-            }).then(function(json) {
+                // get create args
+                let rep = await window.fetch('server.php?fn=getCreateArgs' + getGetParams(), {method:'GET', cache:'no-cache'});
+                const createArgs = await rep.json();
 
                 // error handling
-                if (json.success === false) {
-                    throw new Error(json.msg);
+                if (createArgs.success === false) {
+                    throw new Error(createArgs.msg || 'unknown error occured');
                 }
 
                 // replace binary base64 data with ArrayBuffer. a other way to do this
                 // is the reviver function of JSON.parse()
-                recursiveBase64StrToArrayBuffer(json);
-                return json;
+                recursiveBase64StrToArrayBuffer(createArgs);
 
-               // create credentials
-            }).then(function(createCredentialArgs) {
-                console.log(createCredentialArgs);
-                return navigator.credentials.create(createCredentialArgs);
+                // create credentials
+                const cred = await navigator.credentials.create(createArgs);
 
-                // convert to base64
-            }).then(function(cred) {
-                return {
+                // create object
+                const authenticatorAttestationResponse = {
                     clientDataJSON: cred.response.clientDataJSON  ? arrayBufferToBase64(cred.response.clientDataJSON) : null,
                     attestationObject: cred.response.attestationObject ? arrayBufferToBase64(cred.response.attestationObject) : null
                 };
 
-                // transfer to server
-            }).then(JSON.stringify).then(function(AuthenticatorAttestationResponse) {
-                return window.fetch('server.php?fn=processCreate' + getGetParams(), {method:'POST', body: AuthenticatorAttestationResponse, cache:'no-cache'});
+                // check auth on server side
+                rep = await window.fetch('server.php?fn=processCreate' + getGetParams(), {
+                    method  : 'POST',
+                    body    : JSON.stringify(authenticatorAttestationResponse),
+                    cache   : 'no-cache'
+                });
+                const authenticatorAttestationServerResponse = await rep.json();
 
-                // convert to JSON
-            }).then(function(response) {
-                return response.json();
+                // prompt server response
+                if (authenticatorAttestationServerResponse.success) {
+                    reloadServerPreview();
+                    window.alert(authenticatorAttestationServerResponse.msg || 'registration success');
 
-                // analyze response
-            }).then(function(json) {
-               if (json.success) {
-                   reloadServerPreview();
-                   window.alert(json.msg || 'registration success');
-               } else {
-                   throw new Error(json.msg);
-               }
+                } else {
+                    throw new Error(authenticatorAttestationServerResponse.msg);
+                }
 
-               // catch errors
-            }).catch(function(err) {
+            } catch (err) {
                 reloadServerPreview();
                 window.alert(err.message || 'unknown error occured');
-            });
+            }
         }
 
 
@@ -78,38 +71,31 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
          * checks a FIDO2 registration
          * @returns {undefined}
          */
-        function checkregistration() {
+        async function checkRegistration() {
+            try {
 
-            if (!window.fetch || !navigator.credentials || !navigator.credentials.create) {
-                window.alert('Browser not supported.');
-                return;
-            }
+                if (!window.fetch || !navigator.credentials || !navigator.credentials.create) {
+                    throw new Error('Browser not supported.');
+                }
 
-            // get default args
-            window.fetch('server.php?fn=getGetArgs' + getGetParams(), {method:'GET',cache:'no-cache'}).then(function(response) {
-                return response.json();
-
-                // convert base64 to arraybuffer
-            }).then(function(json) {
+                // get check args
+                let rep = await window.fetch('server.php?fn=getGetArgs' + getGetParams(), {method:'GET',cache:'no-cache'});
+                const getArgs = await rep.json();
 
                 // error handling
-                if (json.success === false) {
-                    throw new Error(json.msg);
+                if (getArgs.success === false) {
+                    throw new Error(getArgs.msg);
                 }
 
                 // replace binary base64 data with ArrayBuffer. a other way to do this
                 // is the reviver function of JSON.parse()
-                recursiveBase64StrToArrayBuffer(json);
-                return json;
+                recursiveBase64StrToArrayBuffer(getArgs);
 
-               // create credentials
-            }).then(function(getCredentialArgs) {
-                return navigator.credentials.get(getCredentialArgs);
+                // check credentials with hardware
+                const cred = await navigator.credentials.get(getArgs);
 
-                // convert to base64
-            }).then(function(cred) {
-                console.log(cred);
-                return {
+                // create object for transmission to server
+                const authenticatorAttestationResponse = {
                     id: cred.rawId ? arrayBufferToBase64(cred.rawId) : null,
                     clientDataJSON: cred.response.clientDataJSON  ? arrayBufferToBase64(cred.response.clientDataJSON) : null,
                     authenticatorData: cred.response.authenticatorData ? arrayBufferToBase64(cred.response.authenticatorData) : null,
@@ -117,31 +103,29 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                     userHandle: cred.response.userHandle ? arrayBufferToBase64(cred.response.userHandle) : null
                 };
 
-                // transfer to server
-            }).then(JSON.stringify).then(function(AuthenticatorAttestationResponse) {
-                return window.fetch('server.php?fn=processGet' + getGetParams(), {method:'POST', body: AuthenticatorAttestationResponse, cache:'no-cache'});
+                // send to server
+                rep = await window.fetch('server.php?fn=processGet' + getGetParams(), {
+                    method:'POST',
+                    body: JSON.stringify(authenticatorAttestationResponse),
+                    cache:'no-cache'
+                });
+                const authenticatorAttestationServerResponse = await rep.json();
 
-                // convert to json
-            }).then(function(response) {
-                return response.json();
+                // check server response
+                if (authenticatorAttestationServerResponse.success) {
+                    reloadServerPreview();
+                    window.alert(authenticatorAttestationServerResponse.msg || 'login success');
+                } else {
+                    throw new Error(authenticatorAttestationServerResponse.msg);
+                }
 
-                // analyze response
-            }).then(function(json) {
-               if (json.success) {
-                   reloadServerPreview();
-                   window.alert(json.msg || 'login success');
-               } else {
-                   throw new Error(json.msg);
-               }
-
-               // catch errors
-            }).catch(function(err) {
+            } catch (err) {
                 reloadServerPreview();
                 window.alert(err.message || 'unknown error occured');
-            });
+            }
         }
 
-        function clearregistration() {
+        function clearRegistration() {
             window.fetch('server.php?fn=clearRegistrations' + getGetParams(), {method:'GET',cache:'no-cache'}).then(function(response) {
                 return response.json();
 
@@ -335,13 +319,13 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                     <table>
                         <tbody><tr>
                                 <td>
-                                    <button type="button" onclick="newregistration()">&#10133; new registration</button>
+                                    <button type="button" onclick="createRegistration()">&#10133; new registration</button>
                                 </td>
                                 <td>
-                                    <button type="button" onclick="checkregistration()">&#10068; check registration</button>
+                                    <button type="button" onclick="checkRegistration()">&#10068; check registration</button>
                                 </td>
                                 <td>
-                                    <button type="button" onclick="clearregistration()">&#9249; clear all registrations</button>
+                                    <button type="button" onclick="clearRegistration()">&#9249; clear all registrations</button>
                                 </td>
                             </tr>
                         </tbody>
