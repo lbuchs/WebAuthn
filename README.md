@@ -95,6 +95,18 @@ When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds`
 #### disadvantage
 The RP ID (= domain) is saved on the authenticator. So If an authenticator is lost, its theoretically possible to find the services, which the authenticator is used and login there.
 
+## Passkeys
+Passkeys is a technique that allows sharing credentials stored on the device with other devices. So from a technical standpoint of the server,
+there is no difference to client-side discoverable credentials. The difference is only that the phone or computer system is automatically
+syncing the credentials between the user’s devices via a cloud service. The cross-device sync of passkeys is managed transparently by the OS.
+
+### Browser support
+Availability of built-in passkeys that automatically synchronize to all of a user’s devices:
+* Apple: iOS 16 / iPadOS 16 / macOS Ventura
+* Google: support in Android starting October 2022
+* Microsoft Windows is set to deliver support in 2023.
+* Firefox see [Bugzilla](https://bugzilla.mozilla.org/show_bug.cgi?id=1792433)
+
 ## Requirements
 * PHP >= 7.1.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
 * Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Edge 18+, Safari 13+)
