@@ -20,6 +20,7 @@ class WebAuthnException extends \Exception {
     const CRYPTO_STRONG = 13;
     const BYTEBUFFER = 14;
     const CBOR = 15;
+    const ANDROID_NOT_TRUSTED = 16;
 
     public function __construct($message = "", $code = 0, $previous = null) {
         parent::__construct($message, $code, $previous);

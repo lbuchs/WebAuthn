@@ -286,10 +286,11 @@ class WebAuthn {
      * @param bool $requireUserVerification true, if the device must verify user (e.g. by biometric data or pin)
      * @param bool $requireUserPresent false, if the device must NOT check user presence (e.g. by pressing a button)
      * @param bool $failIfRootMismatch false, if there should be no error thrown if root certificate doesn't match
+     * @param bool $requireCtsProfileMatch false, if you don't want to check if the device is approved as a Google-certified Android device.
      * @return \stdClass
      * @throws WebAuthnException
      */
-    public function processCreate($clientDataJSON, $attestationObject, $challenge, $requireUserVerification=false, $requireUserPresent=true, $failIfRootMismatch=true) {
+    public function processCreate($clientDataJSON, $attestationObject, $challenge, $requireUserVerification=false, $requireUserPresent=true, $failIfRootMismatch=true, $requireCtsProfileMatch=true) {
         $clientDataHash = \hash('sha256', $clientDataJSON, true);
         $clientData = \json_decode($clientDataJSON);
         $challenge = $challenge instanceof ByteBuffer ? $challenge : new ByteBuffer($challenge);
@@ -328,6 +329,13 @@ class WebAuthn {
         // 14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature
         if (!$attestationObject->validateAttestation($clientDataHash)) {
             throw new WebAuthnException('invalid certificate signature', WebAuthnException::INVALID_SIGNATURE);
+        }
+
+        // Android-SafetyNet: if required, check for Compatibility Testing Suite (CTS).
+        if ($requireCtsProfileMatch && $attestationObject->getAttestationFormat() instanceof Attestation\Format\AndroidSafetyNet) {
+            if (!$attestationObject->getAttestationFormat()->ctsProfileMatch()) {
+                 throw new WebAuthnException('invalid ctsProfileMatch: device is not approved as a Google-certified Android device.', WebAuthnException::ANDROID_NOT_TRUSTED);
+            }
         }
 
         // 15. If validation is successful, obtain a list of acceptable trust anchors
@@ -483,7 +491,7 @@ class WebAuthn {
      * Downloads root certificates from FIDO Alliance Metadata Service (MDS) to a specific folder
      * https://fidoalliance.org/metadata/
      * @param string $certFolder Folder path to save the certificates in PEM format.
-     * @param bool $deleteCerts=true
+     * @param bool $deleteCerts delete certificates in the target folder before adding the new ones.
      * @return int number of cetificates
      * @throws WebAuthnException
      */

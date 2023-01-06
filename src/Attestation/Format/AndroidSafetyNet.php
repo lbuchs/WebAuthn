@@ -72,6 +72,17 @@ class AndroidSafetyNet extends FormatBase {
         }
     }
 
+    /**
+     * ctsProfileMatch: A stricter verdict of device integrity.
+     * If the value of ctsProfileMatch is true, then the profile of the device running your app matches
+     * the profile of a device that has passed Android compatibility testing and
+     * has been approved as a Google-certified Android device.
+     * @return bool
+     */
+    public function ctsProfileMatch() {
+        return isset($this->_payload->ctsProfileMatch) ? !!$this->_payload->ctsProfileMatch : false;
+    }
+
 
     /*
      * returns the key certificate in PEM format
@@ -95,13 +106,13 @@ class AndroidSafetyNet extends FormatBase {
 
         // Verify that attestationCert is issued to the hostname "attest.android.com"
         $certInfo = \openssl_x509_parse($this->getCertificatePem());
-        if (!\is_array($certInfo) || !$certInfo['subject'] || $certInfo['subject']['CN'] !== 'attest.android.com') {
-            throw new WebAuthnException('invalid certificate CN in JWS (' . $certInfo['subject']['CN']. ')', WebAuthnException::INVALID_DATA);
+        if (!\is_array($certInfo) || ($certInfo['subject']['CN'] ?? '') !== 'attest.android.com') {
+            throw new WebAuthnException('invalid certificate CN in JWS (' . ($certInfo['subject']['CN'] ?? '-'). ')', WebAuthnException::INVALID_DATA);
         }
 
-        // Verify that the ctsProfileMatch attribute in the payload of response is true.
-        if (empty($this->_payload->ctsProfileMatch)) {
-            throw new WebAuthnException('invalid ctsProfileMatch in payload', WebAuthnException::INVALID_DATA);
+        // Verify that the basicIntegrity attribute in the payload of response is true.
+        if (empty($this->_payload->basicIntegrity)) {
+            throw new WebAuthnException('invalid basicIntegrity in payload', WebAuthnException::INVALID_DATA);
         }
 
         // check certificate
