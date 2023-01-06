@@ -124,15 +124,6 @@ class WebAuthn {
      */
     public function getCreateArgs($userId, $userName, $userDisplayName, $timeout=20, $requireResidentKey=false, $requireUserVerification=false, $crossPlatformAttachment=null, $excludeCredentialIds=array()) {
 
-        // validate User Verification Requirement
-        if (\is_bool($requireUserVerification)) {
-            $requireUserVerification = $requireUserVerification ? 'required' : 'preferred';
-        } else if (\is_string($requireUserVerification) && \in_array(\strtolower($requireUserVerification), ['required', 'preferred', 'discouraged'])) {
-            $requireUserVerification = \strtolower($requireUserVerification);
-        } else {
-            $requireUserVerification = 'preferred';
-        }
-
         $args = new \stdClass();
         $args->publicKey = new \stdClass();
 
@@ -142,15 +133,29 @@ class WebAuthn {
         $args->publicKey->rp->id = $this->_rpId;
 
         $args->publicKey->authenticatorSelection = new \stdClass();
-        $args->publicKey->authenticatorSelection->userVerification = $requireUserVerification;
+        $args->publicKey->authenticatorSelection->userVerification = 'preferred';
+
+        // validate User Verification Requirement
+        if (\is_bool($requireUserVerification)) {
+            $args->publicKey->authenticatorSelection->userVerification = $requireUserVerification ? 'required' : 'preferred';
+
+        } else if (\is_string($requireUserVerification) && \in_array(\strtolower($requireUserVerification), ['required', 'preferred', 'discouraged'])) {
+            $args->publicKey->authenticatorSelection->userVerification = \strtolower($requireUserVerification);
+        }
+
+        // validate Resident Key Requirement
         if (\is_bool($requireResidentKey) && $requireResidentKey) {
             $args->publicKey->authenticatorSelection->requireResidentKey = true;
+            $args->publicKey->authenticatorSelection->residentKey = 'required';
+
         } else if (\is_string($requireResidentKey) && \in_array(\strtolower($requireResidentKey), ['required', 'preferred', 'discouraged'])) {
             $requireResidentKey = \strtolower($requireResidentKey);
             $args->publicKey->authenticatorSelection->residentKey = $requireResidentKey;
             $args->publicKey->authenticatorSelection->requireResidentKey = $requireResidentKey === 'required';
         }
-        if (is_bool($crossPlatformAttachment)) {
+
+        // filte authenticators attached with the specified authenticator attachment modality
+        if (\is_bool($crossPlatformAttachment)) {
             $args->publicKey->authenticatorSelection->authenticatorAttachment = $crossPlatformAttachment ? 'cross-platform' : 'platform';
         }
 
@@ -160,6 +165,7 @@ class WebAuthn {
         $args->publicKey->user->name = $userName;
         $args->publicKey->user->displayName = $userDisplayName;
 
+        // supported algorithms
         $args->publicKey->pubKeyCredParams = array();
         $tmp = new \stdClass();
         $tmp->type = 'public-key';
@@ -195,7 +201,7 @@ class WebAuthn {
                 $tmp = new \stdClass();
                 $tmp->id = $id instanceof ByteBuffer ? $id : new ByteBuffer($id);  // binary
                 $tmp->type = 'public-key';
-                $tmp->transports = array('usb', 'ble', 'nfc', 'internal');
+                $tmp->transports = array('usb', 'nfc', 'ble', 'hybrid', 'internal');
                 $args->publicKey->excludeCredentials[] = $tmp;
                 unset ($tmp);
             }
@@ -212,6 +218,7 @@ class WebAuthn {
      * @param bool $allowUsb allow removable USB
      * @param bool $allowNfc allow Near Field Communication (NFC)
      * @param bool $allowBle allow Bluetooth
+     * @param bool $allowHybrid allow a combination of (often separate) data-transport and proximity mechanisms.
      * @param bool $allowInternal allow client device-specific transport. These authenticators are not removable from the client device.
      * @param bool|string $requireUserVerification indicates that you require user verification and will fail the operation
      *                                             if the response does not have the UV flag set.
@@ -221,7 +228,7 @@ class WebAuthn {
      *                                             string 'required' 'preferred' 'discouraged'
      * @return \stdClass
      */
-    public function getGetArgs($credentialIds=array(), $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true, $allowInternal=true, $requireUserVerification=false) {
+    public function getGetArgs($credentialIds=array(), $timeout=20, $allowUsb=true, $allowNfc=true, $allowBle=true, $allowHybrid=true, $allowInternal=true, $requireUserVerification=false) {
 
         // validate User Verification Requirement
         if (\is_bool($requireUserVerification)) {
@@ -255,6 +262,9 @@ class WebAuthn {
                 }
                 if ($allowBle) {
                     $tmp->transports[] = 'ble';
+                }
+                if ($allowHybrid) {
+                    $tmp->transports[] = 'hybrid';
                 }
                 if ($allowInternal) {
                     $tmp->transports[] = 'internal';

@@ -59,6 +59,14 @@ class AttestationObject {
     }
 
     /**
+     * returns the attestation format class
+     * @return Format\FormatBase
+     */
+    public function getAttestationFormat() {
+        return $this->_attestationFormat;
+    }
+
+    /**
      * returns the attestation public key in PEM format
      * @return AuthenticatorData
      */

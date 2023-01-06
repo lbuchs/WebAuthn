@@ -39,6 +39,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                 // create object
                 const authenticatorAttestationResponse = {
+                    transports: cred.response.getTransports  ? cred.response.getTransports() : null,
                     clientDataJSON: cred.response.clientDataJSON  ? arrayBufferToBase64(cred.response.clientDataJSON) : null,
                     attestationObject: cred.response.attestationObject ? arrayBufferToBase64(cred.response.attestationObject) : null
                 };
