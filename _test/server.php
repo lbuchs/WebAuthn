@@ -53,13 +53,13 @@ try {
 
     $post = trim(file_get_contents('php://input'));
     if ($post) {
-        $post = json_decode($post);
+        $post = json_decode($post, null, 512, JSON_THROW_ON_ERROR);
     }
 
     if ($fn !== 'getStoredDataHtml') {
 
         // Formats
-        $formats = array();
+        $formats = [];
         if (filter_input(INPUT_GET, 'fmt_android-key')) {
             $formats[] = 'android-key';
         }
@@ -95,15 +95,16 @@ try {
         $typeNfc = !!filter_input(INPUT_GET, 'type_nfc');
         $typeBle = !!filter_input(INPUT_GET, 'type_ble');
         $typeInt = !!filter_input(INPUT_GET, 'type_int');
+        $typeHyb = !!filter_input(INPUT_GET, 'type_hybrid');
 
         // cross-platform: true, if type internal is not allowed
         //                 false, if only internal is allowed
         //                 null, if internal and cross-platform is allowed
         $crossPlatformAttachment = null;
-        if (($typeUsb || $typeNfc || $typeBle) && !$typeInt) {
+        if (($typeUsb || $typeNfc || $typeBle || $typeHyb) && !$typeInt) {
             $crossPlatformAttachment = true;
 
-        } else if (!$typeUsb && !$typeNfc && !$typeBle && $typeInt) {
+        } else if (!$typeUsb && !$typeNfc && !$typeBle && !$typeHyb && $typeInt) {
             $crossPlatformAttachment = false;
         }
 
@@ -158,10 +159,10 @@ try {
     // ------------------------------------
 
     } else if ($fn === 'getGetArgs') {
-        $ids = array();
+        $ids = [];
 
         if ($requireResidentKey) {
-            if (!is_array($_SESSION['registrations']) || count($_SESSION['registrations']) === 0) {
+            if (!isset($_SESSION['registrations']) || !is_array($_SESSION['registrations']) || count($_SESSION['registrations']) === 0) {
                 throw new Exception('we do not have any registrations in session to check the registration');
             }
 
@@ -169,7 +170,7 @@ try {
             // load registrations from session stored there by processCreate.
             // normaly you have to load the credential Id's for a username
             // from the database.
-            if (is_array($_SESSION['registrations'])) {
+            if (isset($_SESSION['registrations']) && is_array($_SESSION['registrations'])) {
                 foreach ($_SESSION['registrations'] as $reg) {
                     if ($reg->userId === $userId) {
                         $ids[] = $reg->credentialId;
@@ -182,7 +183,7 @@ try {
             }
         }
 
-        $getArgs = $WebAuthn->getGetArgs($ids, 20, $typeUsb, $typeNfc, $typeBle, $typeInt, $userVerification);
+        $getArgs = $WebAuthn->getGetArgs($ids, 20, $typeUsb, $typeNfc, $typeBle, $typeHyb, $typeInt, $userVerification);
 
         header('Content-Type: application/json');
         print(json_encode($getArgs));
@@ -212,8 +213,8 @@ try {
         $data->userName = $userName;
         $data->userDisplayName = $userDisplayName;
 
-        if (!array_key_exists('registrations', $_SESSION) || !is_array($_SESSION['registrations'])) {
-            $_SESSION['registrations'] = array();
+        if (!isset($_SESSION['registrations']) || !array_key_exists('registrations', $_SESSION) || !is_array($_SESSION['registrations'])) {
+            $_SESSION['registrations'] = [];
         }
         $_SESSION['registrations'][] = $data;
 
@@ -241,13 +242,13 @@ try {
         $signature = base64_decode($post->signature);
         $userHandle = base64_decode($post->userHandle);
         $id = base64_decode($post->id);
-        $challenge = $_SESSION['challenge'];
+        $challenge = $_SESSION['challenge'] ?? '';
         $credentialPublicKey = null;
 
         // looking up correspondending public key of the credential id
         // you should also validate that only ids of the given user name
         // are taken for the login.
-        if (is_array($_SESSION['registrations'])) {
+        if (isset($_SESSION['registrations']) && is_array($_SESSION['registrations'])) {
             foreach ($_SESSION['registrations'] as $reg) {
                 if ($reg->credentialId === $id) {
                     $credentialPublicKey = $reg->credentialPublicKey;

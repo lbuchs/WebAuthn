@@ -226,6 +226,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             url += '&type_nfc=' + (document.getElementById('type_nfc').checked ? '1' : '0');
             url += '&type_ble=' + (document.getElementById('type_ble').checked ? '1' : '0');
             url += '&type_int=' + (document.getElementById('type_int').checked ? '1' : '0');
+            url += '&type_hybrid=' + (document.getElementById('type_hybrid').checked ? '1' : '0');
 
             url += '&fmt_android-key=' + (document.getElementById('fmt_android-key').checked ? '1' : '0');
             url += '&fmt_android-safetynet=' + (document.getElementById('fmt_android-safetynet').checked ? '1' : '0');
@@ -335,7 +336,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
                     <div>
                         <input type="checkbox" id="requireResidentKey" name="requireResidentKey">
-                        <label for="requireResidentKey">Use Client-side discoverable Credentials
+                        <label for="requireResidentKey">Use Client-side discoverable Credentials / Passkeys
                             <i style="font-size: 0.8em;">Warning: most client-side modules and authenticators don't allow to delete single client side credentials.
                                 You have to reset the full device to remove the credentials again.</i>
                         </label>
@@ -440,6 +441,10 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                         <label for="type_ble">BLE</label>
                     </div>
                     <div>
+                        <input type="checkbox" id="type_hybrid" name="type_hybrid" checked>
+                        <label for="type_hybrid">hybrid <i style="font-size: 0.8em;">passkeys, ...</i></label>
+                    </div>
+                    <div>
                         <input type="checkbox" id="type_int" name="type_int" checked>
                         <label for="type_int">internal <i style="font-size: 0.8em;">Windows Hello, Android SafetyNet, Apple, ...</i></label>
                     </div>
@@ -498,7 +503,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                         the browser may not warn about providing informations about your device.
                    </div>
                     <div style="margin-top:20px;font-size: 0.7em;font-style: italic">
-                        Copyright &copy; 2022 Lukas Buchs - <a href="https://raw.githubusercontent.com/lbuchs/WebAuthn/master/LICENSE">license therms</a>
+                        Copyright &copy; 2023 Lukas Buchs - <a href="https://raw.githubusercontent.com/lbuchs/WebAuthn/master/LICENSE">license therms</a>
                     </div>
 
                 </div>
