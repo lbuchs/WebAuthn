@@ -210,6 +210,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
          */
         function getGetParams() {
             let url = '';
+
             url += '&apple=' + (document.getElementById('cert_apple').checked ? '1' : '0');
             url += '&yubico=' + (document.getElementById('cert_yubico').checked ? '1' : '0');
             url += '&solo=' + (document.getElementById('cert_solo').checked ? '1' : '0');
@@ -220,8 +221,6 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
 
             url += '&requireResidentKey=' + (document.getElementById('requireResidentKey').checked ? '1' : '0');
 
-
-            //<!--$allowUsb=true, $allowNfc=true, $allowBle=true, $allowInternal-->
             url += '&type_usb=' + (document.getElementById('type_usb').checked ? '1' : '0');
             url += '&type_nfc=' + (document.getElementById('type_nfc').checked ? '1' : '0');
             url += '&type_ble=' + (document.getElementById('type_ble').checked ? '1' : '0');
@@ -235,6 +234,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             url += '&fmt_none=' + (document.getElementById('fmt_none').checked ? '1' : '0');
             url += '&fmt_packed=' + (document.getElementById('fmt_packed').checked ? '1' : '0');
             url += '&fmt_tpm=' + (document.getElementById('fmt_tpm').checked ? '1' : '0');
+
             url += '&rpId=' + encodeURIComponent(document.getElementById('rpId').value);
 
             url += '&userId=' + encodeURIComponent(document.getElementById('userId').value);
@@ -259,6 +259,21 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             iframe.src = iframe.src;
         }
 
+        function setAttestation(attestation) {
+            let inputEls = document.getElementsByTagName('input');
+            for (const inputEl of inputEls) {
+                if (inputEl.id && inputEl.id.match(/^(fmt|cert)\_/)) {
+                    inputEl.disabled = !attestation;
+                }
+                if (inputEl.id && inputEl.id.match(/^fmt\_/)) {
+                    inputEl.checked = attestation ? inputEl.id !== 'fmt_none' : inputEl.id === 'fmt_none';
+                }
+                if (inputEl.id && inputEl.id.match(/^cert\_/)) {
+                    inputEl.checked = attestation ? inputEl.id === 'cert_mds' : false;
+                }
+            }
+        }
+
         /**
          * force https on load
          * @returns {undefined}
@@ -269,6 +284,10 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
             }
             if (!document.getElementById('rpId').value) {
                 document.getElementById('rpId').value = location.hostname;
+            }
+
+            if (!document.getElementById('attestation_yes').checked) {
+                setAttestation(false);
             }
         }
 
@@ -373,43 +392,6 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                     </div>
 
                     <div>&nbsp;</div>
-                    <div style="font-weight: bold">attestation statement format</div>
-                    <div>
-                        <input type="checkbox" id="fmt_android-key" name="fmt_android-key" checked>
-                        <label for="fmt_android-key">android-key</label>
-                    </div>
-
-                    <div>
-                        <input type="checkbox" id="fmt_android-safetynet" name="fmt_android-safetynet" checked>
-                        <label for="fmt_android-safetynet">android-safetynet</label>
-                    </div>
-
-                    <div>
-                        <input type="checkbox" id="fmt_apple" name="fmt_apple" checked>
-                        <label for="fmt_apple">apple</label>
-                    </div>
-
-                    <div>
-                        <input type="checkbox" id="fmt_fido-u2f" name="fmt_fido-u2f" checked>
-                        <label for="fmt_fido-u2f">fido-u2f</label>
-                    </div>
-
-                    <div>
-                        <input type="checkbox" id="fmt_none" name="fmt_none" checked>
-                        <label for="fmt_none">none</label>
-                    </div>
-
-                    <div>
-                        <input type="checkbox" id="fmt_packed" name="fmt_packed" checked>
-                        <label for="fmt_packed">packed</label>
-                    </div>
-
-                    <div>
-                        <input type="checkbox" id="fmt_tpm" name="fmt_tpm" checked>
-                        <label for="fmt_tpm">tpm</label>
-                    </div>
-
-                    <div>&nbsp;</div>
                     <div style="font-weight: bold">user verification</div>
                     <div>
                         <input type="radio" id="userVerification_required" name="userVerification">
@@ -449,9 +431,57 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
                         <label for="type_int">internal <i style="font-size: 0.8em;">Windows Hello, Android SafetyNet, Apple, ...</i></label>
                     </div>
 
+                    <div>&nbsp;</div>
+                    <div style="font-weight: bold">attestation</div>
+                    <div>
+                        <input type="radio" id="attestation_yes" value="yes" name="attestation" onchange="setAttestation(this.value === 'yes')" checked>
+                        <label for="attestation_yes">yes</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="attestation_no" value="no" name="attestation" onchange="setAttestation(this.value === 'yes')">
+                        <label for="attestation_no">no</label>
+                    </div>
 
                     <div>&nbsp;</div>
-                    <div style="font-weight: bold">root certificates</div>
+                    <div style="font-weight: bold">attestation statement format</div>
+                    <div>
+                        <input type="checkbox" id="fmt_android-key" name="fmt_android-key" checked>
+                        <label for="fmt_android-key">android-key</label>
+                    </div>
+
+                    <div>
+                        <input type="checkbox" id="fmt_android-safetynet" name="fmt_android-safetynet" checked>
+                        <label for="fmt_android-safetynet">android-safetynet</label>
+                    </div>
+
+                    <div>
+                        <input type="checkbox" id="fmt_apple" name="fmt_apple" checked>
+                        <label for="fmt_apple">apple</label>
+                    </div>
+
+                    <div>
+                        <input type="checkbox" id="fmt_fido-u2f" name="fmt_fido-u2f" checked>
+                        <label for="fmt_fido-u2f">fido-u2f</label>
+                    </div>
+
+                    <div>
+                        <input type="checkbox" id="fmt_none" name="fmt_none">
+                        <label for="fmt_none">none</label>
+                    </div>
+
+                    <div>
+                        <input type="checkbox" id="fmt_packed" name="fmt_packed" checked>
+                        <label for="fmt_packed">packed</label>
+                    </div>
+
+                    <div>
+                        <input type="checkbox" id="fmt_tpm" name="fmt_tpm" checked>
+                        <label for="fmt_tpm">tpm</label>
+                    </div>
+
+
+                    <div>&nbsp;</div>
+                    <div style="font-weight: bold">attestation root certificates</div>
 
                     <div>
                         <input type="checkbox" id="cert_mds" name="mds" checked>
