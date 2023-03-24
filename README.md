@@ -5,7 +5,7 @@
 # WebAuthn
 *A simple PHP WebAuthn (FIDO2) server library*
 
-Goal of this project is to provide a small, lightweight, understandable library to protect logins with security keys like Yubico or Solo, fingerprint on Android or Windows Hello.
+Goal of this project is to provide a small, lightweight, understandable library to protect logins with passkeys, security keys like Yubico or Solo, fingerprint on Android or Windows Hello.
 
 ## Manual
 See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
@@ -50,7 +50,12 @@ This library supports authenticators which are signed with a X.509 certificate o
           alert ok or fail      <----------------'
 
 ## Attestation
-What's attestation? Normally, you just need to verify that a login comes from the same device like the device used on registration. For this usecase, you don't need any attestation. If you need more security, maybe when you know that for your company login everyone has a solokey, you can verify with direct attestation, that this device is really a solokey. Companys could even buy own authenticators signed with a company-own root certificate, then you can verify that a authenticator is one of your company.
+Typically, when someone logs in, you only need to confirm that they are using the same device they used during
+registration. In this scenario, you do not require any form of attestation.
+However, if you need additional security, such as when your company mandates the use of a Solokey for login,
+you can verify its authenticity through direct attestation. Companies may also purchase authenticators that
+are signed with their own root certificate, enabling them to validate that an authenticator is affiliated with
+their organization.
 
 ### no attestation
 just verify that the device is the same device used on registration.
@@ -58,7 +63,9 @@ You can use 'none' attestation with this library if you only check 'none' as for
 * this is propably what you want to use if you want simple 2FA login protection like github, facebook, google, etc.
 
 ### indirect attestation
-the browser may replace the AAGUID and attestation statement with a more privacy-friendly and/or more easily verifiable version of the same data (for example, by employing an anonymization CA). You can not validate against any root ca, if the browser uses a anonymization certificate.
+the browser may replace the AAGUID and attestation statement with a more privacy-friendly and/or more easily
+verifiable version of the same data (for example, by employing an anonymization CA).
+You can not validate against any root ca, if the browser uses a anonymization certificate.
 this library sets attestation to indirect, if you select multiple formats but don't provide any root ca.
 * hybrid soultion, clients may be discouraged by browser warnings but then you know what device they're using (statistics rulez!)
 
@@ -73,16 +80,18 @@ client or client device. Such client-side storage requires a resident credential
 This is only supported by FIDO2 hardware, not by older U2F hardware.
 
 ### How does it work?
-With normal **server-side key** process, the user enters its username (and maybe password),
-then the server replys with a list of all public key credential identifier, which had been registered by the user.
-Then, the authenticator takes the first of the provided credential identifier, which has been issued by himself,
-and responses with a signature which can be validated with the public key provided on registration.
-With **client-side key** process, the user don't have to provide an username or password.
-The server don't send any identifier; rather, the authenticator is looking up in it's own memory,
-if there is a key saved for this relying party. If yes, he's responding the same way like he's doing if you provide a
-list of identifier, there is no difference in checking the registration.
-Resident Credential is supported by Windows 10 (Firefox, Chromium). Browser on old OS like Windows 7
-do a fallback to FIDO U2F, which doesn't support resident credential.
+In a typical **server-side key** process, the user provides their username (and sometimes password)
+and the server responds with a list of all the public key credential identifiers that the user has registered.
+The authenticator then selects the first credential identifier it issued and responds with a signature
+that can be verified using the public key registered during the registration process.
+
+In a client-side key process, the user does not need to provide a username or password.
+Instead, the authenticator searches its own memory to see if it has saved a key for the relying party.
+If a key is found, the authentication process proceeds in the same way as it would if the server had sent a list
+of identifiers. There is no difference in the verification process.
+
+Both Apple and Windows 10/11 (with Firefox and Chromium) support Resident Credential.
+However, older operating systems such as Windows 7 do not support it and instead fall back to using FIDO U2F.
 
 ### How can I use it with this library?
 #### on registration
@@ -101,7 +110,7 @@ there is no difference to client-side discoverable credentials. The difference i
 syncing the credentials between the user’s devices via a cloud service. The cross-device sync of passkeys is managed transparently by the OS.
 
 ### Browser support
-Availability of built-in passkeys that automatically synchronize to all of a user’s devices:
+Availability of built-in passkeys that automatically synchronize to all of a user’s devices: (see also [passkeys.dev/device-support](https://passkeys.dev/device-support/))
 * Apple: iOS 16 / iPadOS 16 / macOS Ventura
 * Google: support in Android starting October 2022
 * Microsoft Windows is set to deliver support in 2023.
@@ -117,6 +126,7 @@ Availability of built-in passkeys that automatically synchronize to all of a use
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
 * [dev.yubico](https://developers.yubico.com/FIDO2/)
 * [FIDO Alliance](https://fidoalliance.org)
+* [passkeys](https://passkeys.dev/)
 
 ## FIDO2 Hardware
 * [Yubico](https://www.yubico.com)
