@@ -139,3 +139,4 @@ Availability of built-in passkeys that automatically synchronize to all of a use
 * [OneSpan](https://www.vasco.com/products/two-factor-authenticators/hardware/one-button/digipass-secureclick.html)
 * [Hypersecu](https://hypersecu.com/tmp/products/hyperfido)
 * [Kensington VeriMark™](https://www.kensington.com/)
+* [Token2](https://www.token2.com/shop/category/fido2-keys)
