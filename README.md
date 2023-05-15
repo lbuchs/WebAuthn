@@ -117,7 +117,7 @@ Availability of built-in passkeys that automatically synchronize to all of a use
 * Firefox see [Bugzilla](https://bugzilla.mozilla.org/show_bug.cgi?id=1792433)
 
 ## Requirements
-* PHP >= 7.1.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
+* PHP >= 7.3.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
 * Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Edge 18+, Safari 13+)
 
 ## Infos about WebAuthn
