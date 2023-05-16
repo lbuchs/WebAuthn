@@ -117,7 +117,7 @@ Availability of built-in passkeys that automatically synchronize to all of a use
 * Firefox see [Bugzilla](https://bugzilla.mozilla.org/show_bug.cgi?id=1792433)
 
 ## Requirements
-* PHP >= 7.1.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php)
+* PHP >= 8.0 with [OpenSSL](http://php.net/manual/en/book.openssl.php) and [Multibyte String](https://www.php.net/manual/en/book.mbstring.php)
 * Browser with [WebAuthn support](https://caniuse.com/webauthn) (Firefox 60+, Chrome 67+, Edge 18+, Safari 13+)
 
 ## Infos about WebAuthn
@@ -139,3 +139,4 @@ Availability of built-in passkeys that automatically synchronize to all of a use
 * [OneSpan](https://www.vasco.com/products/two-factor-authenticators/hardware/one-button/digipass-secureclick.html)
 * [Hypersecu](https://hypersecu.com/tmp/products/hyperfido)
 * [Kensington VeriMark™](https://www.kensington.com/)
+* [Token2](https://www.token2.com/shop/category/fido2-keys)
