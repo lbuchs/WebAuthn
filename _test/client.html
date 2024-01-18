@@ -279,7 +279,7 @@ license https://github.com/lbuchs/WebAuthn/blob/master/LICENSE MIT
          * @returns {undefined}
          */
         window.onload = function() {
-            if (location.protocol !== 'https:' && location.host !== 'localhost') {
+            if (location.protocol !== 'https:' && location.host.indexOf('localhost') === -1) {
                 location.href = location.href.replace('http', 'https');
             }
             if (!document.getElementById('rpId').value) {
