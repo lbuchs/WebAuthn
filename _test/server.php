@@ -47,9 +47,9 @@ try {
     $userName = filter_input(INPUT_GET, 'userName', FILTER_SANITIZE_SPECIAL_CHARS);
     $userDisplayName = filter_input(INPUT_GET, 'userDisplayName', FILTER_SANITIZE_SPECIAL_CHARS);
 
-    $userId = preg_replace('/[^0-9a-f]/i', '', $userId);
-    $userName = preg_replace('/[^0-9a-z]/i', '', $userName);
-    $userDisplayName = preg_replace('/[^0-9a-z öüäéèàÖÜÄÉÈÀÂÊÎÔÛâêîôû]/i', '', $userDisplayName);
+    $userId = $userId ? preg_replace('/[^0-9a-f]/i', '', $userId): "";
+    $userName = $userName ? preg_replace('/[^0-9a-z]/i', '', $userName): "";
+    $userDisplayName = $userDisplayName ? preg_replace('/[^0-9a-z öüäéèàÖÜÄÉÈÀÂÊÎÔÛâêîôû]/i', '', $userDisplayName): "";
 
     $post = trim(file_get_contents('php://input'));
     if ($post) {
