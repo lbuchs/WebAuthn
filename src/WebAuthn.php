@@ -397,6 +397,8 @@ class WebAuthn {
         $data->rootValid = $rootValid;
         $data->userPresent = $userPresent;
         $data->userVerified = $userVerified;
+    	$data->isBackupEligible = $attestationObject->getAuthenticatorData()->getIsBackupEligible();
+        $data->isBackedUp = $attestationObject->getAuthenticatorData()->getIsBackup();
         return $data;
     }
 
