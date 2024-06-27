@@ -621,7 +621,7 @@ class WebAuthn {
      * @throws WebAuthnException
      */
     private function _checkOrigin($origin) {
-        if (str_starts_with('android:apk-key-hash:', $origin)) {
+        if (str_starts_with($origin, 'android:apk-key-hash:')) {
             return $this->_checkAndroidKeyHashes($origin);
         }
 
