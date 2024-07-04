@@ -172,7 +172,7 @@ class WebAuthn {
             $args->publicKey->authenticatorSelection->requireResidentKey = $requireResidentKey === 'required';
         }
 
-        // filte authenticators attached with the specified authenticator attachment modality
+        // filter authenticators attached with the specified authenticator attachment modality
         if (\is_bool($crossPlatformAttachment)) {
             $args->publicKey->authenticatorSelection->authenticatorAttachment = $crossPlatformAttachment ? 'cross-platform' : 'platform';
         }

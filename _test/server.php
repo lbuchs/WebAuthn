@@ -200,14 +200,14 @@ try {
     // ------------------------------------
 
     } else if ($fn === 'processCreate') {
-        $clientDataJSON = base64_decode($post->clientDataJSON);
-        $attestationObject = base64_decode($post->attestationObject);
-        $challenge = $_SESSION['challenge'];
+        $clientDataJSON = !empty($post->clientDataJSON) ? base64_decode($post->clientDataJSON) : null;
+        $attestationObject = !empty($post->attestationObject) ? base64_decode($post->attestationObject) : null;
+        $challenge = $_SESSION['challenge'] ?? null;
 
         // processCreate returns data to be stored for future logins.
         // in this example we store it in the php session.
-        // Normaly you have to store the data in a database connected
-        // with the user name.
+        // Normally you have to store the data in a database connected
+        // with the username.
         $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, $userVerification === 'required', true, false);
 
         // add user infos
@@ -239,11 +239,11 @@ try {
     // ------------------------------------
 
     } else if ($fn === 'processGet') {
-        $clientDataJSON = base64_decode($post->clientDataJSON);
-        $authenticatorData = base64_decode($post->authenticatorData);
-        $signature = base64_decode($post->signature);
-        $userHandle = base64_decode($post->userHandle);
-        $id = base64_decode($post->id);
+        $clientDataJSON = !empty($post->clientDataJSON) ? base64_decode($post->clientDataJSON) : null;
+        $authenticatorData = !empty($post->authenticatorData) ? base64_decode($post->authenticatorData) : null;
+        $signature = !empty($post->signature) ? base64_decode($post->signature) : null;
+        $userHandle = !empty($post->userHandle) ? base64_decode($post->userHandle) : null;
+        $id = !empty($post->id) ? base64_decode($post->id) : null;
         $challenge = $_SESSION['challenge'] ?? '';
         $credentialPublicKey = null;
 

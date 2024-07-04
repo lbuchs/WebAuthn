@@ -1,7 +1,13 @@
-# Netbeans project
-nbproject/
-/index.php
+# ide folders
+nbproject
+.idea
 
+# redirect page
+index.php
+
+# composer things
+composer.lock
+vendor
 
 # .pem files from FIDO Alliance Metadata Service (MDS)
 _test/rootCertificates/mds/*.pem
