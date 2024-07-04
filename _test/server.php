@@ -116,6 +116,8 @@ try {
         // add root certificates to validate new registrations
         if (filter_input(INPUT_GET, 'solo')) {
             $WebAuthn->addRootCertificates('rootCertificates/solo.pem');
+            $WebAuthn->addRootCertificates('rootCertificates/solokey_f1.pem');
+            $WebAuthn->addRootCertificates('rootCertificates/solokey_r1.pem');
         }
         if (filter_input(INPUT_GET, 'apple')) {
             $WebAuthn->addRootCertificates('rootCertificates/apple.pem');
