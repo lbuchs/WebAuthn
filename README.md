@@ -5,7 +5,7 @@
 # WebAuthn
 *A simple PHP WebAuthn (FIDO2) server library*
 
-Goal of this project is to provide a small, lightweight, understandable library to protect logins with passkeys, security keys like Yubico or Solo, fingerprint on Android or Windows Hello.
+The goal of this project is to provide a small, lightweight, understandable library to protect logins with passkeys, security keys like Yubico or Solo, fingerprint on Android, or Windows Hello.
 
 ## Manual
 See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://webauthn.lubu.ch) for a working example.
@@ -20,7 +20,7 @@ See /_test for a simple usage of this library. Check [webauthn.lubu.ch](https://
 * tpm &#x2705;
 
 > [!NOTE]
-> This library supports authenticators which are signed with a X.509 certificate or which are self attested. ECDAA is not supported.
+> This library supports authenticators that are signed with an X.509 certificate or that are self-attested. ECDAA is not supported.
 
 ## Workflow
 
@@ -59,35 +59,36 @@ are signed with their own root certificate, enabling them to validate that an au
 their organization.
 
 ### no attestation
-just verify that the device is the same device used on registration.
+Just verify that the device is the same device used on registration.
 You can use 'none' attestation with this library if you only check 'none' as format.
 
 > [!TIP]
-> this is propably what you want to use if you want secure login for a public website.
+> This is probably what you want to use if you want secure login for a public website.
 
-### indirect attestation
-the browser may replace the AAGUID and attestation statement with a more privacy-friendly and/or more easily
+### Indirect attestation
+The browser may replace the AAGUID and attestation statement with a more privacy-friendly and/or more easily
 verifiable version of the same data (for example, by employing an anonymization CA).
-You can not validate against any root ca, if the browser uses a anonymization certificate.
-this library sets attestation to indirect, if you select multiple formats but don't provide any root ca.
+You cannot validate against any root CA if the browser uses an anonymization certificate.
+This library sets attestation to indirect if you select multiple formats but don't provide any root CA.
 
 > [!TIP]
-> hybrid soultion, clients may be discouraged by browser warnings but then you know what device they're using (statistics rulez!)
+> A hybrid solution. Clients may be discouraged by browser warnings, but then you know what device they're using (statistics rulez!).
 
-### direct attestation
-the browser proviedes data about the identificator device, the device can be identified uniquely. User could be tracked over multiple sites, because of that the browser may show a warning message about providing this data when register.
-this library sets attestation to direct, if you select multiple formats and provide root ca's.
+### Direct attestation
+The browser provides data about the identificator device, which can be identified uniquely.
+Users could be tracked across multiple sites. Because of this, the browser may show a warning message about providing this data during registration.
+This library sets attestation to direct if you select multiple formats and provide root CAs.
 
 > [!TIP]
-> this is probably what you want if you know what devices your clients are using and make sure that only this devices are used.
+> This is probably what you want if you know what devices your clients are using and want to ensure that only these devices are used.
 
 ## Passkeys / Client-side discoverable Credentials
 A Client-side discoverable Credential Source is a public key credential source whose credential private key is stored in the authenticator,
-client or client device. Such client-side storage requires a resident credential capable authenticator.
-This is only supported by FIDO2 hardware, not by older U2F hardware.
+client, or client device. Such client-side storage requires a resident credential-capable authenticator.
+This is only supported by FIDO2 hardware, not older U2F hardware.
 
 >[!NOTE]
->Passkeys is a technique that allows sharing credentials stored on the device with other devices. So from a technical standpoint of the server, there is no difference to client-side discoverable credentials. The difference is only that the phone or computer system is automatically syncing the credentials between the user’s devices via a cloud service. The cross-device sync of passkeys is managed transparently by the OS.
+> Passkeys is a technique that allows sharing credentials stored on the device with other devices. So from a technical standpoint of the server, there is no difference from client-side discoverable credentials. The difference is only that the phone or computer system automatically syncs the credentials between the user’s devices via a cloud service. The cross-device sync of passkeys is managed transparently by the OS.
 
 ### How does it work?
 In a typical server-side key management process, a user initiates a request by entering their username and, in some cases, their password. 
@@ -100,18 +101,18 @@ If a key is found, the authentication process proceeds in the same way as it wou
 of identifiers. There is no difference in the verification process.
 
 ### How can I use it with this library?
-#### on registration
-When calling `WebAuthn\WebAuthn->getCreateArgs`, set `$requireResidentKey` to true,
-to notify the authenticator that he should save the registration in its memory.
+#### On registration
+When calling `WebAuthn\WebAuthn->getCreateArgs`, set `$requireResidentKey` to true
+to notify the authenticator that it should save the registration in its memory.
 
-#### on login
-When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds` (the authenticator will look up the ids in its own memory and returns the user ID as userHandle).
+#### On login
+When calling `WebAuthn\WebAuthn->getGetArgs`, don't provide any `$credentialIds` (the authenticator will look up the IDs in its own memory and return the user ID as userHandle).
 Set the type of authenticator to `hybrid` (Passkey scanned via QR Code) and `internal` (Passkey stored on the device itself).
 
-#### disadvantage
-The RP ID (= domain) is saved on the authenticator. So If an authenticator is lost, its theoretically possible to find the services, which the authenticator is used and login there.
+#### Disadvantage
+The RP ID (= domain) is saved on the authenticator. If an authenticator is lost, it is theoretically possible to find the services it was used against and login there.
 
-### device support
+### Device support
 Availability of built-in passkeys that automatically synchronize to all of a user’s devices: (see also [passkeys.dev/device-support](https://passkeys.dev/device-support/))
 * Apple iOS 16+ / iPadOS 16+ / macOS Ventura+
 * Android 9+
