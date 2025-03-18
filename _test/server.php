@@ -214,7 +214,8 @@ try {
         $data->userId = $userId;
         $data->userName = $userName;
         $data->userDisplayName = $userDisplayName;
-
+        //set Null to 0
+        $data->signatureCounter ??= 0;
         if (!isset($_SESSION['registrations']) || !array_key_exists('registrations', $_SESSION) || !is_array($_SESSION['registrations'])) {
             $_SESSION['registrations'] = [];
         }
