@@ -357,6 +357,11 @@ class WebAuthn {
             throw new WebAuthnException('invalid origin', WebAuthnException::INVALID_ORIGIN);
         }
 
+        // Reject cross-origin requests (proposed Level 3 spec §7.1 Step 10).
+        if (\property_exists($clientData, 'crossOrigin') && $clientData->crossOrigin === true) {
+            throw new WebAuthnException('cross-origin request not allowed', WebAuthnException::INVALID_ORIGIN);
+        }
+
         // Attestation
         $attestationObject = new Attestation\AttestationObject($attestationObject, $this->_formats);
 
@@ -473,6 +478,11 @@ class WebAuthn {
         // 9. Verify that the value of C.origin matches the Relying Party's origin.
         if (!\property_exists($clientData, 'origin') || !$this->_checkOrigin($clientData->origin)) {
             throw new WebAuthnException('invalid origin', WebAuthnException::INVALID_ORIGIN);
+        }
+
+        // Reject cross-origin requests (proposed Level 3 spec §7.2 Step 13).
+        if (\property_exists($clientData, 'crossOrigin') && $clientData->crossOrigin === true) {
+            throw new WebAuthnException('cross-origin request not allowed', WebAuthnException::INVALID_ORIGIN);
         }
 
         // 11. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.
