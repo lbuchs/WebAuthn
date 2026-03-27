@@ -636,9 +636,12 @@ class WebAuthn {
         $host = \parse_url($origin, PHP_URL_HOST);
         $host = \trim($host, '.');
 
-        // The RP ID must be equal to the origin's effective domain, or a registrable
-        // domain suffix of the origin's effective domain.
-        return \preg_match('/' . \preg_quote($this->_rpId) . '$/i', $host) === 1;
+        // The RP ID must be equal to the origin's effective domain, or the
+        // origin's host must be a subdomain of the RP ID (i.e. preceded by a dot).
+        if (\strcasecmp($host, $this->_rpId) === 0) {
+            return true;
+        }
+        return \str_ends_with(\strtolower($host), '.' . \strtolower($this->_rpId));
     }
 
     /**
