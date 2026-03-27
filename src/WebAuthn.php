@@ -357,6 +357,12 @@ class WebAuthn {
             throw new WebAuthnException('invalid origin', WebAuthnException::INVALID_ORIGIN);
         }
 
+        // 6. Verify tokenBinding status (Level 2 §7.1 Step 6). Token Binding is
+        //    deprecated (removed in Level 3), so reject "present" since we cannot verify it.
+        if (\property_exists($clientData, 'tokenBinding') && \is_object($clientData->tokenBinding) && \property_exists($clientData->tokenBinding, 'status') && $clientData->tokenBinding->status === 'present') {
+            throw new WebAuthnException('token binding not supported', WebAuthnException::INVALID_DATA);
+        }
+
         // Attestation
         $attestationObject = new Attestation\AttestationObject($attestationObject, $this->_formats);
 
@@ -473,6 +479,12 @@ class WebAuthn {
         // 9. Verify that the value of C.origin matches the Relying Party's origin.
         if (!\property_exists($clientData, 'origin') || !$this->_checkOrigin($clientData->origin)) {
             throw new WebAuthnException('invalid origin', WebAuthnException::INVALID_ORIGIN);
+        }
+
+        // 10. Verify tokenBinding status (Level 2 §7.2 Step 10). Token Binding is
+        //     deprecated (removed in Level 3), so reject "present" since we cannot verify it.
+        if (\property_exists($clientData, 'tokenBinding') && \is_object($clientData->tokenBinding) && \property_exists($clientData->tokenBinding, 'status') && $clientData->tokenBinding->status === 'present') {
+            throw new WebAuthnException('token binding not supported', WebAuthnException::INVALID_DATA);
         }
 
         // 11. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.
