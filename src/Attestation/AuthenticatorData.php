@@ -281,6 +281,12 @@ class AuthenticatorData {
         $flags->isBackup = $flags->bit_4;
         $flags->attestedDataIncluded = $flags->bit_6;
         $flags->extensionDataIncluded = $flags->bit_7;
+
+        // Backup State (BS) requires Backup Eligible (BE) per spec.
+        if ($flags->isBackup && !$flags->isBackupEligible) {
+            throw new WebAuthnException('invalid backup flags: BS without BE', WebAuthnException::INVALID_DATA);
+        }
+
         return $flags;
     }
 
