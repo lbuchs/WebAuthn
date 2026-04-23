@@ -186,7 +186,7 @@ class WebAuthn {
         // supported algorithms
         $args->publicKey->pubKeyCredParams = [];
 
-        if (function_exists('sodium_crypto_sign_verify_detached') || \in_array('ed25519', \openssl_get_curve_names(), true)) {
+        if (function_exists('sodium_crypto_sign_verify_detached') || defined('OPENSSL_KEYTYPE_ED25519')) {
             $tmp = new \stdClass();
             $tmp->type = 'public-key';
             $tmp->alg = -8; // EdDSA
@@ -676,8 +676,8 @@ class WebAuthn {
      */
     private function _verifySignature($dataToVerify, $signature, $credentialPublicKey) {
 
-        // Use Sodium to verify EdDSA 25519 as its not yet supported by openssl
-        if (\function_exists('sodium_crypto_sign_verify_detached') && !\in_array('ed25519', \openssl_get_curve_names(), true)) {
+        // Use Sodium to verify EdDSA 25519 if it's not supported by openssl
+        if (\function_exists('sodium_crypto_sign_verify_detached') && !defined('OPENSSL_KEYTYPE_ED25519')) {
             $pkParts = [];
             if (\preg_match('/BEGIN PUBLIC KEY\-+(?:\s|\n|\r)+([^\-]+)(?:\s|\n|\r)*\-+END PUBLIC KEY/i', $credentialPublicKey, $pkParts)) {
                 $rawPk = \base64_decode($pkParts[1]);
@@ -685,7 +685,7 @@ class WebAuthn {
                 // 30        = der sequence
                 // 2a        = length 42 byte
                 // 30        = der sequence
-                // 05        = lenght 5 byte
+                // 05        = length 5 byte
                 // 06        = der OID
                 // 03        = OID length 3 byte
                 // 2b 65 70  = OID 1.3.101.112 curveEd25519 (EdDSA 25519 signature algorithm)
@@ -709,6 +709,17 @@ class WebAuthn {
             throw new WebAuthnException('public key invalid', WebAuthnException::INVALID_PUBLIC_KEY);
         }
 
-        return \openssl_verify($dataToVerify, $signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
+        $algo = OPENSSL_ALGO_SHA256;
+
+        if(defined('OPENSSL_KEYTYPE_ED25519')) {
+            $publicKeyDetails = openssl_pkey_get_details($publicKey);
+
+            if($publicKeyDetails && $publicKeyDetails['type'] === OPENSSL_KEYTYPE_ED25519) {
+                // algorithm 0 is used because EdDSA has a built-in hash
+                $algo = 0;
+            }
+        }
+
+        return \openssl_verify($dataToVerify, $signature, $publicKey, $algo) === 1;
     }
 }
