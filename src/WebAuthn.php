@@ -31,6 +31,7 @@ class WebAuthn {
     private $_caFiles;
     private $_formats;
     private $_androidKeyHashes;
+    private $_relatedOrigins;
 
     /**
      * Initialize a new WebAuthn server
@@ -88,6 +89,28 @@ class WebAuthn {
             }
         } else if (\is_file($path) && !\in_array(\realpath($path), $this->_caFiles)) {
             $this->_caFiles[] = \realpath($path);
+        }
+    }
+
+    /**
+     * add origins outside the RP ID's domain which may use this relying party's credentials
+     * (Related Origin Requests, https://www.w3.org/TR/webauthn-3/#sctn-related-origins).
+     * The browser allows such an origin when it is listed at https://{rpId}/.well-known/webauthn;
+     * the server must accept the same origins when it validates the client data. Only the origin
+     * check is widened: the RP ID hash in the authenticator data must still be this relying party's.
+     * @param array<string> $origins full https origins, e.g. https://app.example.org
+     * @return void
+     */
+    public function addRelatedOrigins($origins) {
+        if (!\is_array($this->_relatedOrigins)) {
+            $this->_relatedOrigins = [];
+        }
+
+        foreach ($origins as $origin) {
+            $normalized = \is_string($origin) ? $this->_normalizeOrigin($origin) : null;
+            if ($normalized !== null && !\in_array($normalized, $this->_relatedOrigins, true)) {
+                $this->_relatedOrigins[] = $normalized;
+            }
         }
     }
 
@@ -625,6 +648,14 @@ class WebAuthn {
             return $this->_checkAndroidKeyHashes($origin);
         }
 
+        // An origin on another domain, explicitly allowed by addRelatedOrigins (exact match)
+        if (\is_array($this->_relatedOrigins) && $this->_relatedOrigins) {
+            $normalized = $this->_normalizeOrigin($origin);
+            if ($normalized !== null && \in_array($normalized, $this->_relatedOrigins, true)) {
+                return true;
+            }
+        }
+
         // https://www.w3.org/TR/webauthn/#rp-id
 
         // The origin's scheme must be https
@@ -639,6 +670,31 @@ class WebAuthn {
         // The RP ID must be equal to the origin's effective domain, or a registrable
         // domain suffix of the origin's effective domain.
         return \preg_match('/' . \preg_quote($this->_rpId) . '$/i', $host) === 1;
+    }
+
+    /**
+     * reduces an https origin to scheme://host[:port] in lower case, without a default port.
+     * @param string $origin
+     * @return string|null null if it is not a plain https origin
+     */
+    private function _normalizeOrigin($origin) {
+        $parts = \parse_url($origin);
+        if (!\is_array($parts) || !isset($parts['scheme'], $parts['host']) || \strtolower($parts['scheme']) !== 'https') {
+            return null;
+        }
+
+        // an origin has no credentials, path, query or fragment
+        if (isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])
+                || (isset($parts['path']) && $parts['path'] !== '' && $parts['path'] !== '/')) {
+            return null;
+        }
+
+        $normalized = 'https://' . \strtolower($parts['host']);
+        if (isset($parts['port']) && (int)$parts['port'] !== 443) {
+            $normalized .= ':' . (int)$parts['port'];
+        }
+
+        return $normalized;
     }
 
     /**
