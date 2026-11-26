@@ -219,7 +219,7 @@ class WebAuthn {
         $args->publicKey->attestation = \count($this->_formats) === 1 && \in_array('none', $this->_formats) ? 'none' : $attestation;
         $args->publicKey->extensions = new \stdClass();
         $args->publicKey->extensions->exts = true;
-        $args->publicKey->timeout = $timeout * 1000; // microseconds
+        $args->publicKey->timeout = $timeout * 1000; // milliseconds
         $args->publicKey->challenge = $this->_createChallenge(); // binary
 
         //prevent re-registration by specifying existing credentials
